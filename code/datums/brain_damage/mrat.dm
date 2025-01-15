@@ -4,15 +4,15 @@
 	scan_desc = "epistemania"
 	gain_text = "<span class='notice'>Requesting mentor...</span>"
 	lose_text = ""
-	random_gain = FALSE
 	resilience = TRAUMA_RESILIENCE_ABSOLUTE
+	trauma_flags = TRAUMA_DEFAULT_FLAGS | TRAUMA_NOT_RANDOM | TRAUMA_SPECIAL_CURE_PROOF
 
 /datum/brain_trauma/special/imaginary_friend/mrat/make_friend()
 	friend = new /mob/camera/imaginary_friend/mrat(get_turf(owner), src)
 
 /datum/brain_trauma/special/imaginary_friend/mrat/get_ghost()
 	set waitfor = FALSE
-	var/list/mob/dead/observer/candidates = pollMentorCandidatesForMob("Do you want to play as [owner]'s mentor rat?", ROLE_PAI, null, null, 75, friend, POLL_IGNORE_IMAGINARYFRIEND)
+	var/list/mob/dead/observer/candidates = pollMentorCandidatesForMob("Do you want to play as [owner]'s mentor rat?", ROLE_IMAGINARY_FRIEND, null, 7.5 SECONDS, friend, POLL_IGNORE_MRAT)
 	if(LAZYLEN(candidates))
 		var/mob/dead/observer/C = pick(candidates)
 		friend.key = C.key
@@ -114,6 +114,8 @@
 	to_chat(src, "<span class='notice'>Your job is to answer [owner]'s question(s) and you are given this form to assist in that.</span>")
 	to_chat(src, "<span class='notice'>Don't be stupid with this or you will face the consequences.</span>")
 
+CREATION_TEST_IGNORE_SUBTYPES(/mob/camera/imaginary_friend/mrat)
+
 /mob/camera/imaginary_friend/mrat/Initialize(mapload, _trauma)
 	. = ..()
 	costume = new
@@ -121,7 +123,9 @@
 	leave = new
 	leave.Grant(src)
 
-	grant_all_languages()
+	grant_all_languages(UNDERSTOOD_LANGUAGE) // they understand all language, but doesn't have to speak that
+	// mentor rats default language is set to metalanguage from imaginary friend init
+	// everything mrat says will be understandable to all people
 
 /mob/camera/imaginary_friend/mrat/proc/add_kick_action()
 	kick = new
@@ -140,7 +144,7 @@
 /datum/action/innate/mrat_costume
 	name = "Change Appearance"
 	desc = "Shape your appearance to whatever you desire."
-	icon_icon = 'icons/mob/actions/actions_minor_antag.dmi'
+	icon_icon = 'icons/hud/actions/actions_minor_antag.dmi'
 	background_icon_state = "bg_revenant"
 	button_icon_state = "ninja_phase"
 
@@ -153,7 +157,7 @@
 /datum/action/innate/mrat_leave
 	name = "Leave"
 	desc = "Leave and return to your ghost form."
-	icon_icon = 'icons/mob/actions/actions_minor_antag.dmi'
+	icon_icon = 'icons/hud/actions/actions_minor_antag.dmi'
 	background_icon_state = "bg_revenant"
 	button_icon_state = "beam_up"
 
@@ -170,7 +174,7 @@
 /datum/action/innate/mrat_kick
 	name = "Remove Mentor"
 	desc = "Removes your mentor."
-	icon_icon = 'icons/mob/actions/actions_minor_antag.dmi'
+	icon_icon = 'icons/hud/actions/actions_minor_antag.dmi'
 	background_icon_state = "bg_revenant"
 	button_icon_state = "beam_up"
 	var/mob/camera/imaginary_friend/mrat/friend

@@ -42,6 +42,8 @@ falloff_distance - Distance at which falloff begins. Sound is at peak volume (in
 */
 
 /proc/playsound(atom/source, soundin, vol as num, vary, extrarange as num, falloff_exponent = SOUND_FALLOFF_EXPONENT, frequency = null, channel = 0, pressure_affected = TRUE, ignore_walls = TRUE, falloff_distance = SOUND_DEFAULT_FALLOFF_DISTANCE, use_reverb = TRUE)
+	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_SOUND_PLAYED, source, soundin)
+
 	if(isarea(source))
 		CRASH("playsound(): source is an area")
 
@@ -50,30 +52,39 @@ falloff_distance - Distance at which falloff begins. Sound is at peak volume (in
 	if (!turf_source || !soundin || !vol)
 		return
 
+	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_SOUND_PLAYED, source, soundin)
+
 	var/maxdistance = (SOUND_RANGE + extrarange)
 	var/source_z = turf_source.z
 
 	//allocate a channel if necessary now so its the same for everyone
 	channel = channel || SSsounds.random_available_channel()
 
- 	// Looping through the player list has the added bonus of working for mobs inside containers
+	// Looping through the player list has the added bonus of working for mobs inside containers
 	var/sound/S = sound(get_sfx(soundin))
 	var/list/listeners = SSmobs.clients_by_zlevel[source_z].Copy()
 	/// Everyone that actually heard the sound
 	var/list/hearers = list()
-	var/turf/above_turf = SSmapping.get_turf_above(turf_source)
-	var/turf/below_turf = SSmapping.get_turf_below(turf_source)
+	var/turf/above_turf = GET_TURF_ABOVE(turf_source)
+	var/turf/below_turf = GET_TURF_BELOW(turf_source)
+
 	if(ignore_walls)
+
 		if(above_turf && istransparentturf(above_turf))
 			listeners += SSmobs.clients_by_zlevel[above_turf.z]
+
 		if(below_turf && istransparentturf(turf_source))
 			listeners += SSmobs.clients_by_zlevel[below_turf.z]
+
 	else //these sounds don't carry through walls
 		listeners = get_hearers_in_view(maxdistance, turf_source)
+
 		if(above_turf && istransparentturf(above_turf))
 			listeners += get_hearers_in_view(maxdistance, above_turf)
+
 		if(below_turf && istransparentturf(turf_source))
 			listeners += get_hearers_in_view(maxdistance, below_turf)
+
 	for(var/mob/listening_mob in listeners | SSmobs.dead_players_by_zlevel[source_z])//observers always hear through walls
 		if(get_dist(listening_mob, turf_source) <= maxdistance)
 			listening_mob.playsound_local(turf_source, soundin, vol, vary, frequency, falloff_exponent, channel, pressure_affected, S, maxdistance, falloff_distance, 1, use_reverb)
@@ -110,11 +121,10 @@ distance_multiplier - Can be used to multiply the distance at which the sound is
 	S.channel = channel || SSsounds.random_available_channel()
 	S.volume = vol
 
-	if(vary)
-		if(frequency)
-			S.frequency = frequency
-		else
-			S.frequency = get_rand_frequency()
+	if(frequency)
+		S.frequency = frequency
+	else if(vary)
+		S.frequency = get_rand_frequency()
 
 	if(isturf(turf_source))
 		var/turf/T = get_turf(src)
@@ -190,9 +200,13 @@ distance_multiplier - Can be used to multiply the distance at which the sound is
 			var/mob/M = m
 			M.playsound_local(M, null, volume, vary, frequency, null, channel, pressure_affected, S)
 
-/proc/play_soundtrack_music(var/datum/soundtrack_song/song, list/hearers = null, volume = 80, ignore_prefs = FALSE, play_to_lobby = FALSE, allow_deaf = TRUE, only_station = FALSE)
-	var/sound/S = sound(initial(song.file), volume=volume, wait=0, channel=CHANNEL_AMBIENT_MUSIC)
+/proc/play_soundtrack_music(var/datum/soundtrack_song/song, list/hearers = null, ignore_prefs = FALSE, play_to_lobby = FALSE, allow_deaf = TRUE, only_station = SOUNDTRACK_PLAY_RESPECT, is_global = TRUE)
+	var/sound/S = sound(initial(song.file), volume=initial(song.volume), wait=0, channel=CHANNEL_SOUNDTRACK)
 	. = S
+
+	// Clear any existing soundtrack
+	if(is_global && !isnull(GLOB.current_soundtrack))
+		stop_soundtrack_music(stop_playing = TRUE)
 
 	if(!hearers)
 		hearers = GLOB.player_list
@@ -201,7 +215,10 @@ distance_multiplier - Can be used to multiply the distance at which the sound is
 		if (!ismob(M))
 			continue
 
-		if (!ignore_prefs && !(M.client?.prefs?.toggles & PREFTOGGLE_SOUND_AMBIENCE))
+		if (!M.client)
+			continue
+
+		if (!ignore_prefs && !M.client.prefs?.read_player_preference(/datum/preference/toggle/sound_soundtrack))
 			continue
 
 		if (!play_to_lobby && isnewplayer(M))
@@ -210,16 +227,30 @@ distance_multiplier - Can be used to multiply the distance at which the sound is
 		if (!allow_deaf && !M.can_hear())
 			continue
 
-		if (only_station && !is_station_level(M.z))
+		if (((only_station == 0 && initial(song.station_only)) || only_station == 2) && !is_station_level(M.z))
 			continue
+
+		if(!is_global) // make sure nothing is already running
+			M.stop_sound_channel(CHANNEL_SOUNDTRACK)
 
 		SEND_SOUND(M, S)
 
+	if(!is_global)
+		return
 	GLOB.soundtrack_this_round |= song
+	GLOB.current_soundtrack = song
+	// Stop playing this soundtrack for everyone, and also prevent it from playing if the pref is toggled
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(stop_soundtrack_music)), initial(song.length) + 1 SECONDS, TIMER_CLIENT_TIME)
 
-/proc/stop_soundtrack_music()
+/mob/proc/play_current_soundtrack(volume = 80)
+	return !isnull(GLOB.current_soundtrack) ? play_soundtrack_music(GLOB.current_soundtrack, list(src), is_global = FALSE) : null
+
+/proc/stop_soundtrack_music(stop_playing = FALSE)
+	GLOB.current_soundtrack = null
+	if(!stop_playing)
+		return
 	for(var/mob/M as() in GLOB.player_list)
-		M?.stop_sound_channel(CHANNEL_AMBIENT_MUSIC)
+		M?.stop_sound_channel(CHANNEL_SOUNDTRACK)
 
 /mob/proc/stop_sound_channel(chan)
 	SEND_SOUND(src, sound(null, repeat = 0, wait = 0, channel = chan))
@@ -233,7 +264,7 @@ distance_multiplier - Can be used to multiply the distance at which the sound is
 	set waitfor = FALSE
 	UNTIL(SSticker.login_music) //wait for SSticker init to set the login music
 
-	if(prefs && (prefs.toggles & PREFTOGGLE_SOUND_LOBBY))
+	if(prefs?.read_player_preference(/datum/preference/toggle/sound_lobby))
 		SEND_SOUND(src, sound(SSticker.login_music, repeat = 0, wait = 0, volume = vol, channel = CHANNEL_LOBBYMUSIC)) // MAD JAMS
 
 /proc/get_rand_frequency()

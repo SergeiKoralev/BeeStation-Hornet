@@ -3,7 +3,7 @@
 	desc = "Syndicate operatives can use a series of codewords to convey complex information, while sounding like random concepts and drinks to anyone listening in."
 	key = "t"
 	default_priority = 0
-	flags = TONGUELESS_SPEECH | LANGUAGE_HIDE_ICON_IF_NOT_UNDERSTOOD_WITH_LINGUIST_TRAIT
+	flags = TONGUELESS_SPEECH | LANGUAGE_HIDE_ICON_IF_NOT_UNDERSTOOD__LINGUIST_ONLY
 	icon_state = "codespeak"
 
 /datum/language/codespeak/scramble(input)
@@ -35,6 +35,7 @@
 	desc = "The book's cover reads: \"Codespeak(tm) - Secure your communication with metaphors so elaborate, they seem randomly generated!\""
 	icon = 'icons/obj/library.dmi'
 	icon_state = "book2"
+	item_flags = ISWEAPON
 	var/charges = 1
 
 /obj/item/codespeak_manual/attack_self(mob/living/user)
@@ -46,7 +47,7 @@
 		return
 
 	to_chat(user, "<span class='boldannounce'>You start skimming through [src], and suddenly your mind is filled with codewords and responses.</span>")
-	user.grant_language(/datum/language/codespeak, TRUE, TRUE, LANGUAGE_MIND)
+	user.grant_language(/datum/language/codespeak, source = LANGUAGE_MIND)
 
 	use_charge(user)
 
@@ -65,7 +66,7 @@
 		M.visible_message("<span class='danger'>[user] beats [M] over the head with [src]!</span>", "<span class='userdanger'>[user] beats you over the head with [src]!</span>", "<span class='italics'>You hear smacking.</span>")
 	else
 		M.visible_message("<span class='notice'>[user] teaches [M] by beating [M.p_them()] over the head with [src]!</span>", "<span class='boldnotice'>As [user] hits you with [src], codewords and responses flow through your mind.</span>", "<span class='italics'>You hear smacking.</span>")
-		M.grant_language(/datum/language/codespeak, TRUE, TRUE, LANGUAGE_MIND)
+		M.grant_language(/datum/language/codespeak, source = LANGUAGE_MIND)
 		use_charge(user)
 
 /obj/item/codespeak_manual/proc/use_charge(mob/user)

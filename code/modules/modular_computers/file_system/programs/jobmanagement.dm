@@ -10,22 +10,7 @@
 	tgui_id = "NtosJobManager"
 	program_icon = "address-book"
 
-
-
 	var/change_position_cooldown = 30
-	//Jobs you cannot open new positions for
-	var/list/blacklisted = list(
-		JOB_NAME_AI,
-		JOB_NAME_ASSISTANT,
-		JOB_NAME_CYBORG,
-		JOB_NAME_CAPTAIN,
-		JOB_NAME_HEADOFPERSONNEL,
-		JOB_NAME_HEADOFSECURITY,
-		JOB_NAME_CHIEFENGINEER,
-		JOB_NAME_RESEARCHDIRECTOR,
-		JOB_NAME_CHIEFMEDICALOFFICER,
-		JOB_NAME_BRIGPHYSICIAN,
-		JOB_NAME_DEPUTY)
 
 	//The scaling factor of max total positions in relation to the total amount of people on board the station in %
 	var/max_relative_positions = 30 //30%: Seems reasonable, limit of 6 @ 20 players
@@ -38,8 +23,11 @@
 	..()
 	change_position_cooldown = CONFIG_GET(number/id_console_jobslot_delay)
 
+/datum/computer_file/program/proc/job_blacklisted(jobtitle)
+	return jobtitle == SSjob.overflow_role ? TRUE : (jobtitle in SSjob.job_manager_blacklisted)
+
 /datum/computer_file/program/job_management/proc/can_open_job(datum/job/job)
-	if(!(job?.title in blacklisted))
+	if(!job_blacklisted(job?.title))
 		if((job.total_positions <= length(GLOB.player_list) * (max_relative_positions / 100)))
 			var/delta = (world.time / 10) - GLOB.time_last_changed_position
 			if((change_position_cooldown < delta) || (opened_positions[job.title] < 0))
@@ -47,7 +35,7 @@
 	return FALSE
 
 /datum/computer_file/program/job_management/proc/can_close_job(datum/job/job)
-	if(!(job?.title in blacklisted))
+	if(!job_blacklisted(job?.title))
 		if(job.total_positions > length(GLOB.player_list) * (max_relative_positions / 100))
 			var/delta = (world.time / 10) - GLOB.time_last_changed_position
 			if((change_position_cooldown < delta) || (opened_positions[job.title] > 0))
@@ -62,14 +50,14 @@
 	var/obj/item/card/id/user_id = card_slot?.stored_card
 
 	if(!user_id || !(ACCESS_CHANGE_IDS in user_id.access))
-		return
+		return TRUE
 
 	switch(action)
 		if("PRG_open_job")
 			var/edit_job_target = params["target"]
 			var/datum/job/j = SSjob.GetJob(edit_job_target)
 			if(!j || !can_open_job(j))
-				return
+				return TRUE
 			if(opened_positions[edit_job_target] >= 0)
 				GLOB.time_last_changed_position = world.time / 10
 			j.total_positions++
@@ -80,7 +68,7 @@
 			var/edit_job_target = params["target"]
 			var/datum/job/j = SSjob.GetJob(edit_job_target)
 			if(!j || !can_close_job(j))
-				return
+				return TRUE
 			//Allow instant closing without cooldown if a position has been opened before
 			if(opened_positions[edit_job_target] <= 0)
 				GLOB.time_last_changed_position = world.time / 10
@@ -92,9 +80,9 @@
 			var/priority_target = params["target"]
 			var/datum/job/j = SSjob.GetJob(priority_target)
 			if(!j)
-				return
+				return TRUE
 			if(j.total_positions <= j.current_positions)
-				return
+				return TRUE
 			if(j in SSjob.prioritized_jobs)
 				SSjob.prioritized_jobs -= j
 			else
@@ -107,7 +95,7 @@
 
 
 /datum/computer_file/program/job_management/ui_data(mob/user)
-	var/list/data = get_header_data()
+	var/list/data = list()
 
 	var/authed = FALSE
 	var/obj/item/computer_hardware/card_slot/card_slot = computer.all_components[MC_CARD]
@@ -120,7 +108,7 @@
 	var/list/pos = list()
 	for(var/j in SSjob.occupations)
 		var/datum/job/job = j
-		if(job.title in blacklisted)
+		if(job_blacklisted(job.title))
 			continue
 
 		pos += list(list(

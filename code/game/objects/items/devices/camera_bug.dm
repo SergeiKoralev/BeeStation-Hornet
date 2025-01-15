@@ -47,9 +47,6 @@
 		tracking = null
 	return ..()
 
-/obj/item/camera_bug/interact(mob/user)
-	ui_interact(user)
-
 /obj/item/camera_bug/ui_interact(mob/user = usr)
 	. = ..()
 	var/datum/browser/popup = new(user, "camerabug","Camera Bug",nref=src)
@@ -86,7 +83,7 @@
 				if(!camera_ref || !camera.c_tag)
 					continue
 				bugged_cameras[camera.c_tag] = camera_ref
-	return sortList(bugged_cameras)
+	return sort_list(bugged_cameras)
 
 
 /obj/item/camera_bug/proc/menu(list/cameras)
@@ -170,7 +167,7 @@
 			dat += " (Stage [stage])"
 			dat += " <a href='?[REF(src)];track=[REF(S)]'>\[Track\]</a><br>"
 
-		for(var/obj/mecha/M in seen)
+		for(var/obj/vehicle/sealed/mecha/M in seen)
 			if(M.name in names)
 				names[M.name]++
 				dat += "[M.name] ([names[M.name]])"
@@ -187,7 +184,7 @@
 			else
 				names[M.name] = 1
 				dat += "[M.name]"
-			if(!(M.mobility_flags & MOBILITY_STAND))
+			if(M.body_position == LYING_DOWN)
 				if(M.buckled)
 					dat += " (Sitting)"
 				else

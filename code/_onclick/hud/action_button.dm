@@ -1,5 +1,3 @@
-#define ACTION_BUTTON_DEFAULT_BACKGROUND "default"
-
 /atom/movable/screen/movable/action_button
 	var/datum/action/linked_action
 	var/actiontooltipstyle = ""
@@ -43,17 +41,17 @@
 
 /atom/movable/screen/movable/action_button/Click(location,control,params)
 	if (!can_use(usr))
-		return
+		return FALSE
 
 	var/list/modifiers = params2list(params)
-	if(modifiers["shift"])
+	if(LAZYACCESS(modifiers, SHIFT_CLICK))
 		if(locked)
 			to_chat(usr, "<span class='warning'>Action button \"[name]\" is locked, unlock it first.</span>")
 			return TRUE
 		moved = 0
 		usr.update_action_buttons() //redraw buttons that are no longer considered "moved"
 		return TRUE
-	if(modifiers["ctrl"])
+	if(LAZYACCESS(modifiers, CTRL_CLICK))
 		locked = !locked
 		to_chat(usr, "<span class='notice'>Action button \"[name]\" [locked ? "" : "un"]locked.</span>")
 		if(id && usr.client) //try to (un)remember position
@@ -73,40 +71,57 @@
 /atom/movable/screen/movable/action_button/hide_toggle
 	name = "Hide Buttons"
 	desc = "Shift-click any button to reset its position, and Control-click it to lock it in place. Alt-click this button to reset all buttons to their default positions."
-	icon = 'icons/mob/actions.dmi'
+	icon = 'icons/hud/actions/action_generic.dmi'
 	icon_state = "bg_default"
-	var/hidden = 0
-	var/hide_icon = 'icons/mob/actions.dmi'
+	var/hidden = FALSE
+	var/hide_icon = 'icons/hud/actions/action_generic.dmi'
 	var/hide_state = "hide"
 	var/show_state = "show"
+	var/mutable_appearance/hide_appearance
+	var/mutable_appearance/show_appearance
+
+/atom/movable/screen/movable/action_button/hide_toggle/Initialize(mapload)
+	. = ..()
+	var/static/list/icon_cache = list()
+
+	var/cache_key = "[hide_icon][hide_state]"
+	hide_appearance = icon_cache[cache_key]
+	if(!hide_appearance)
+		hide_appearance = icon_cache[cache_key] = mutable_appearance(hide_icon, hide_state)
+
+	cache_key = "[hide_icon][show_state]"
+	show_appearance = icon_cache[cache_key]
+	if(!show_appearance)
+		show_appearance = icon_cache[cache_key] = mutable_appearance(hide_icon, show_state)
 
 /atom/movable/screen/movable/action_button/hide_toggle/Click(location,control,params)
 	if (!can_use(usr))
 		return
 
 	var/list/modifiers = params2list(params)
-	if(modifiers["shift"])
+	if(LAZYACCESS(modifiers, SHIFT_CLICK))
 		if(locked)
 			to_chat(usr, "<span class='warning'>Action button \"[name]\" is locked, unlock it first.</span>")
 			return TRUE
 		moved = FALSE
 		usr.update_action_buttons(TRUE)
 		return TRUE
-	if(modifiers["ctrl"])
+	if(LAZYACCESS(modifiers, CTRL_CLICK))
 		locked = !locked
 		to_chat(usr, "<span class='notice'>Action button \"[name]\" [locked ? "" : "un"]locked.</span>")
 		if(id && usr.client) //try to (un)remember position
 			usr.client.prefs.action_buttons_screen_locs["[name]_[id]"] = locked ? moved : null
 		return TRUE
-	if(modifiers["alt"])
+	if(LAZYACCESS(modifiers, ALT_CLICK))
+		var/buttons_locked = usr.client.prefs.read_player_preference(/datum/preference/toggle/buttons_locked)
 		for(var/V in usr.actions)
 			var/datum/action/A = V
 			var/atom/movable/screen/movable/action_button/B = A.button
 			B.moved = FALSE
 			if(B.id && usr.client)
 				usr.client.prefs.action_buttons_screen_locs["[B.name]_[B.id]"] = null
-			B.locked = usr.client.prefs.toggles2 & PREFTOGGLE_2_LOCKED_BUTTONS
-		locked = usr.client.prefs.toggles2 & PREFTOGGLE_2_LOCKED_BUTTONS
+			B.locked = buttons_locked
+		locked = buttons_locked
 		moved = FALSE
 		if(id && usr.client)
 			usr.client.prefs.action_buttons_screen_locs["[name]_[id]"] = null
@@ -120,7 +135,7 @@
 		name = "Show Buttons"
 	else
 		name = "Hide Buttons"
-	update_icon()
+	update_appearance()
 	usr.update_action_buttons()
 
 /atom/movable/screen/movable/action_button/hide_toggle/AltClick(mob/user)
@@ -141,12 +156,11 @@
 	hide_icon = settings["toggle_icon"]
 	hide_state = settings["toggle_hide"]
 	show_state = settings["toggle_show"]
-	update_icon()
+	update_appearance()
 
-/atom/movable/screen/movable/action_button/hide_toggle/update_icon()
-	cut_overlays()
-	add_overlay(mutable_appearance(hide_icon, hidden ? show_state : hide_state))
-
+/atom/movable/screen/movable/action_button/hide_toggle/update_overlays()
+	. = ..()
+	. += hidden ? show_appearance : hide_appearance
 
 /atom/movable/screen/movable/action_button/MouseEntered(location,control,params)
 	if(!QDELETED(src))
@@ -162,7 +176,7 @@
 	.["bg_state"] = "template"
 
 	//TODO : Make these fit theme
-	.["toggle_icon"] = 'icons/mob/actions.dmi'
+	.["toggle_icon"] = 'icons/hud/actions/action_generic.dmi'
 	.["toggle_hide"] = "hide"
 	.["toggle_show"] = "show"
 
@@ -236,3 +250,5 @@
 	var/matrix/M = matrix()
 	M.Translate(x_offset,y_offset)
 	button.transform = M
+
+#undef AB_MAX_COLUMNS

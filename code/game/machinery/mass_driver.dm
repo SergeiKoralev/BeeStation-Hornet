@@ -13,6 +13,21 @@
 	var/drive_range = 10
 	var/power_per_obj = 1000
 
+/obj/machinery/mass_driver/notspace
+	drive_range = 50
+
+/obj/machinery/mass_driver/supermatter
+	name = "emergency supermatter ejection pad"
+	id = "smeject"
+	armor_type = /datum/armor/massdriver_supermatter
+	critical_machine = 1
+
+/datum/armor/massdriver_supermatter
+	melee = 10
+	bullet = 10
+	laser = 10
+	fire = 100
+	acid = 70
 
 /obj/machinery/mass_driver/Initialize(mapload)
 	. = ..()

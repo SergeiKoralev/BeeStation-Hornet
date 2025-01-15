@@ -51,11 +51,12 @@ PROCESSING_SUBSYSTEM_DEF(orbits)
 	//Ruin level count
 	var/ruin_levels = 0
 
-/datum/controller/subsystem/processing/orbits/Initialize(start_timeofday)
-	. = ..()
+/datum/controller/subsystem/processing/orbits/Initialize()
 	setup_event_list()
 	//Create the main orbital map.
 	orbital_maps[PRIMARY_ORBITAL_MAP] = new /datum/orbital_map()
+
+	return SS_INIT_SUCCESS
 
 /datum/controller/subsystem/processing/orbits/Recover()
 	orbital_maps |= SSorbits.orbital_maps
@@ -93,7 +94,7 @@ PROCESSING_SUBSYSTEM_DEF(orbits)
 /datum/controller/subsystem/processing/orbits/proc/get_event()
 	if(!event_probability)
 		return null
-	return pickweight(runnable_events)
+	return pick_weight(runnable_events)
 
 /datum/controller/subsystem/processing/orbits/proc/post_load_init()
 	for(var/map_key in orbital_maps)
@@ -158,7 +159,7 @@ PROCESSING_SUBSYSTEM_DEF(orbits)
 	if(!length(possible_objectives))
 		priority_announce("Priority station objective received - Details transmitted to all available objective consoles. \
 			[GLOB.station_name] will have funds distributed upon objective completion.", "Central Command Report", SSstation.announcer.get_rand_report_sound())
-	var/chosen = pickweight(valid_objectives)
+	var/chosen = pick_weight(valid_objectives)
 	if(!chosen)
 		return
 	var/datum/orbital_objective/objective = new chosen()
@@ -183,6 +184,11 @@ PROCESSING_SUBSYSTEM_DEF(orbits)
 	for(var/obj/machinery/computer/objective/computer as() in GLOB.objective_computers)
 		for(var/M in computer.viewing_mobs)
 			computer.update_static_data(M)
+
+/// parameter must accept 'get_virtual_z_level()' values
+/datum/controller/subsystem/processing/orbits/proc/get_orbital_map_name_from_z(my_z)
+	var/datum/orbital_object/O = assoc_z_levels["[my_z]"]
+	return O?.name
 
 /*
  * Returns the base data of what is required for

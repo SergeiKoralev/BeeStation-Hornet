@@ -7,20 +7,28 @@
 	desc = "A haphazardly-constructed yet still deadly weapon of ancient design."
 	force = 10
 	w_class = WEIGHT_CLASS_BULKY
+	item_flags = ISWEAPON
 	slot_flags = ITEM_SLOT_BACK
 	block_upgrade_walk = 1
 	throwforce = 20
 	throw_speed = 4
-	embedding = list("armour_block" = 60)
+	embedding = list("armour_block" = 60, "max_damage_mult" = 0.5)
 	armour_penetration = 10
-	materials = list(/datum/material/iron=1150, /datum/material/glass=2075)
+	custom_materials = list(/datum/material/iron=1150, /datum/material/glass=2075)
 	hitsound = 'sound/weapons/bladeslice.ogg'
-	attack_verb = list("attacked", "poked", "jabbed", "torn", "gored")
-	sharpness = IS_SHARP
+	attack_verb_continuous = list("attacks", "pokes", "jabs", "tears", "lacerates", "gores")
+	attack_verb_simple = list("attack", "poke", "jab", "tear", "lacerate", "gore")
+	sharpness = SHARP
+	bleed_force = BLEED_CUT
 	max_integrity = 200
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 50, "acid" = 30, "stamina" = 0)
+	armor_type = /datum/armor/item_spear
 	var/war_cry = "AAAAARGH!!!"
 	var/icon_prefix = "spearglass"
+
+
+/datum/armor/item_spear
+	fire = 50
+	acid = 30
 
 /obj/item/spear/ComponentInitialize()
 	. = ..()
@@ -61,6 +69,8 @@
 	icon_prefix = "spearbomb"
 	icon_state = "spearbomb0"
 	var/obj/item/grenade/explosive = null
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/spear/explosive)
 
 /obj/item/spear/explosive/Initialize(mapload, obj/item/grenade/G)
 	. = ..()
@@ -134,7 +144,8 @@
 /obj/item/spear/grey_tide
 	name = "\improper Grey Tide"
 	desc = "Recovered from the aftermath of a revolt aboard Defense Outpost Theta Aegis, in which a seemingly endless tide of Assistants caused heavy casualities among Nanotrasen military forces."
-	attack_verb = list("gored")
+	attack_verb_continuous = list("gores")
+	attack_verb_simple = list("gore")
 	force=15
 
 /obj/item/spear/grey_tide/ComponentInitialize()
@@ -185,11 +196,13 @@
 	block_upgrade_walk = 1
 	throwforce = 22
 	throw_speed = 4
-	embedding = list("armour_block" = 30)
+	embedding = list("armour_block" = 30, "max_damage_mult" = 0.5)
 	armour_penetration = 10
 	hitsound = 'sound/weapons/bladeslice.ogg'
-	attack_verb = list("attacked", "poked", "jabbed", "tore", "gored")
-	sharpness = IS_SHARP
+	attack_verb_continuous = list("attacks", "pokes", "jabs", "tears", "lacerates", "gores")
+	attack_verb_simple = list("attack", "poke", "jab", "tear", "lacerate", "gore")
+	sharpness = SHARP
+	bleed_force = BLEED_CUT
 
 /obj/item/spear/bamboospear/ComponentInitialize()
 	. = ..()

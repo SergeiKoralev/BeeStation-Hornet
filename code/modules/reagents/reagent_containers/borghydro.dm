@@ -102,11 +102,11 @@ Borg Hypospray
 		return
 	if(!istype(M))
 		return
-	if(R.total_volume && M.can_inject(user, 1, user.zone_selected,bypass_protection))
+	if(R.total_volume && M.can_inject(user, 1, user.get_combat_bodyzone(M, zone_context = BODYZONE_CONTEXT_INJECTION), bypass_protection))
 		to_chat(M, "<span class='warning'>You feel a tiny prick!</span>")
 		to_chat(user, "<span class='notice'>You inject [M] with the injector.</span>")
 		var/fraction = min(amount_per_transfer_from_this/R.total_volume, 1)
-		R.expose(M, INJECT, fraction)
+		R.reaction(M, INJECT, fraction)
 		if(M.reagents)
 			var/trans = R.trans_to(M, amount_per_transfer_from_this, transfered_by = user)
 			to_chat(user, "<span class='notice'>[trans] unit\s injected.  [R.total_volume] unit\s remaining.</span>")
@@ -117,7 +117,7 @@ Borg Hypospray
 	log_combat(user, M, "injected", src, "(CHEMICALS: [english_list(injected)])")
 
 /obj/item/reagent_containers/borghypo/attack_self(mob/user)
-	var/chosen_reagent = modes[reagent_names[input(user, "What reagent do you want to dispense?") as null|anything in sortList(reagent_names)]]
+	var/chosen_reagent = modes[reagent_names[input(user, "What reagent do you want to dispense?") as null|anything in sort_list(reagent_names)]]
 	if(!chosen_reagent)
 		return
 	mode = chosen_reagent
@@ -185,6 +185,21 @@ Borg Shaker
 	accepts_reagent_upgrades = FALSE
 
 	reagent_ids = list(
+			//Non-alcoholic
+			/datum/reagent/water,
+			/datum/reagent/consumable/coffee,
+			/datum/reagent/consumable/tea,
+			/datum/reagent/consumable/space_cola,
+			/datum/reagent/consumable/dr_gibb,
+			/datum/reagent/consumable/spacemountainwind,
+			/datum/reagent/consumable/space_up,
+			//Fruit Juice
+			/datum/reagent/consumable/banana,
+			/datum/reagent/consumable/lemonjuice,
+			/datum/reagent/consumable/limejuice,
+			/datum/reagent/consumable/orangejuice,
+			/datum/reagent/consumable/tomatojuice,
+			//Alcoholic
 			/datum/reagent/consumable/ethanol/absinthe,
 			/datum/reagent/consumable/ethanol/ale,
 			/datum/reagent/consumable/ethanol/beer,
@@ -192,25 +207,21 @@ Borg Shaker
 			/datum/reagent/consumable/ethanol/gin,
 			/datum/reagent/consumable/ethanol/kahlua,
 			/datum/reagent/consumable/ethanol/rum,
+			/datum/reagent/consumable/ethanol/sake,
 			/datum/reagent/consumable/ethanol/tequila,
 			/datum/reagent/consumable/ethanol/triple_sec,
 			/datum/reagent/consumable/ethanol/vermouth,
 			/datum/reagent/consumable/ethanol/vodka,
 			/datum/reagent/consumable/ethanol/whiskey,
 			/datum/reagent/consumable/ethanol/wine,
-			/datum/reagent/consumable/banana,
-			/datum/reagent/consumable/coffee,
-			/datum/reagent/consumable/cream,
-			/datum/reagent/consumable/grenadine,
+			//Other stuff for mixing
 			/datum/reagent/consumable/ice,
-			/datum/reagent/consumable/lemonjuice,
-			/datum/reagent/consumable/limejuice,
-			/datum/reagent/consumable/milk,
-			/datum/reagent/consumable/orangejuice,
 			/datum/reagent/consumable/sodawater,
-			/datum/reagent/consumable/space_cola,
-			/datum/reagent/consumable/tomatojuice,
-			/datum/reagent/consumable/tonic)
+			/datum/reagent/consumable/tonic,
+			/datum/reagent/consumable/grenadine,
+			/datum/reagent/consumable/cream,
+			/datum/reagent/consumable/milk,
+			/datum/reagent/consumable/sugar)
 
 /obj/item/reagent_containers/borghypo/borgshaker/attack(mob/M, mob/user)
 	return //Can't inject stuff with a shaker, can we? //not with that attitude

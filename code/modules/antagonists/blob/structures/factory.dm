@@ -4,6 +4,7 @@
 	icon_state = "blob_factory"
 	desc = "A thick spire of tendrils."
 	max_integrity = 200
+	max_hit_damage = 40
 	health_regen = 1
 	point_return = 25
 	resistance_flags = LAVA_PROOF
@@ -48,12 +49,14 @@
 
 /obj/structure/blob/factory/lone //A blob factory that functions without a pulses
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/blob/factory/lone)
+
 /obj/structure/blob/factory/lone/Initialize(mapload, owner_overmind)
 	. = ..()
 	START_PROCESSING(SSobj, src)
 
 /obj/structure/blob/factory/lone/process()
-	addtimer(CALLBACK(src, /obj/structure/blob/factory/lone.proc/Be_Pulsed), 10 SECONDS, TIMER_UNIQUE)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/obj/structure/blob/factory/lone, Be_Pulsed)), 10 SECONDS, TIMER_UNIQUE)
 
 /obj/structure/blob/factory/lone/Be_Pulsed()
 	. = ..()

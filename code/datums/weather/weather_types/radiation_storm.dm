@@ -19,10 +19,10 @@
 	area_type = /area
 	protected_areas = list(/area/maintenance, /area/ai_monitored/turret_protected/ai_upload, /area/ai_monitored/turret_protected/ai_upload_foyer,
 	/area/ai_monitored/turret_protected/ai, /area/storage/emergency/starboard, /area/storage/emergency/port, /area/shuttle, /area/security/prison/asteroid/shielded,
-	/area/security/prison/asteroid/service, /area/space/nearstation)
+	/area/security/prison/asteroid/service, /area/space/nearstation, /area/solar, /area/security/prison, /area/holodeck/prison)
 	target_trait = ZTRAIT_STATION
 
-	immunity_type = "rad"
+	immunity_type = RAD
 
 /datum/weather/rad_storm/telegraph()
 	..()
@@ -30,11 +30,11 @@
 
 
 /datum/weather/rad_storm/weather_act(mob/living/L)
-	var/resist = L.getarmor(null, "rad")
+	var/resist = L.getarmor(null, RAD)
 	if(prob(40))
 		if(ishuman(L))
 			var/mob/living/carbon/human/H = L
-			if(H.dna && !HAS_TRAIT(H, TRAIT_RADIMMUNE))
+			if(H.dna && !HAS_TRAIT(H, TRAIT_RADIMMUNE) && !isdiona(L))
 				if(prob(max(0,100-resist)))
 					H.randmuti()
 					if(prob(50))

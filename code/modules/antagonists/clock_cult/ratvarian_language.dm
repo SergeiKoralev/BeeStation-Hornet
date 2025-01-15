@@ -17,14 +17,14 @@ List of nuances:
 - Any time the WORD "of" occurs, it is linked to the previous word by a hyphen. (i.e. "V nz-bs Ratvar." directly translates to "I am-of Ratvar.")
 - Any time "th", followed by any two letters occurs, you add a grave (`) between those two letters, i.e; "Thi`s"
 - In the same vein, any time "ti", followed by one letter occurs, you add a grave (`) between "i" and the letter, i.e; "Ti`me"
-- Whereever "te" or "et" appear and there is another letter next to the e(i.e; "m"etal, greate"r"), add a hyphen between "e" and the letter, i.e; "M-etal", "Greate-r"
+- Wherever "te" or "et" appear and there is another letter next to the e(i.e; "m"etal, greate"r"), add a hyphen between "e" and the letter, i.e; "M-etal", "Greate-r"
 - Where "gua" appears, add a hyphen between "gu" and "a", i.e "Gu-ard"
 - Where the WORD "and" appears it is linked to all surrounding words by hyphens, i.e; "Sword-and-shield"
 - Where the WORD "to" appears, it is linked to the following word by a hyphen, i.e; "to-use"
 - Where the WORD "my" appears, it is linked to the following word by a hyphen, i.e; "my-light"
 - Although "Ratvar" translates to "Engine" in English, the word "Ratvar" is used regardless of language as it is a proper noun.
- - The same rule applies to Ratvar's four generals: Nezbere (Armorer), Sevtug (Fright), Nzcrentr (Amperage), and Inath-neq (Vangu-Ard), although these words can be used in proper context if one is
-   not referring to the four generals and simply using the words themselves.
+- The same rule applies to Ratvar's four generals: Nezbere (Armorer), Sevtug (Fright), Nzcrentr (Amperage), and Inath-neq (Vangu-Ard), although these words can be used in proper context if one is
+	not referring to the four generals and simply using the words themselves.
 */
 
 //Regexes used to alter english to ratvarian style
@@ -109,3 +109,38 @@ List of nuances:
 			L.whisper(message, "clock", spans, language=/datum/language/common)
 	else
 		AM.say(message, language=/datum/language/common)
+
+#undef RATVAR_OF_MATCH
+#undef RATVAR_OF_REPLACEMENT
+#undef RATVAR_GUA_MATCH
+#undef RATVAR_GUA_REPLACEMENT
+#undef RATVAR_TH_MATCH
+#undef RATVAR_TH_REPLACEMENT
+#undef RATVAR_TI_MATCH
+#undef RATVAR_TI_REPLACEMENT
+#undef RATVAR_ET_MATCH
+#undef RATVAR_ET_REPLACEMENT
+#undef RATVAR_TE_MATCH
+#undef RATVAR_TE_REPLACEMENT
+#undef RATVAR_PRE_AND_MATCH
+#undef RATVAR_PRE_AND_REPLACEMENT
+#undef RATVAR_POST_AND_MATCH
+#undef RATVAR_POST_AND_REPLACEMENT
+#undef RATVAR_TO_MATCH
+#undef RATVAR_TO_REPLACEMENT
+#undef RATVAR_MY_MATCH
+#undef RATVAR_MY_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_PRE_AND_MATCH
+#undef REVERSE_RATVAR_HYPHEN_PRE_AND_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_POST_AND_MATCH
+#undef REVERSE_RATVAR_HYPHEN_POST_AND_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_TO_MY_MATCH
+#undef REVERSE_RATVAR_HYPHEN_TO_MY_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_TE_MATCH
+#undef REVERSE_RATVAR_HYPHEN_TE_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_ET_MATCH
+#undef REVERSE_RATVAR_HYPHEN_ET_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_GUA_MATCH
+#undef REVERSE_RATVAR_HYPHEN_GUA_REPLACEMENT
+#undef REVERSE_RATVAR_HYPHEN_OF_MATCH
+#undef REVERSE_RATVAR_HYPHEN_OF_REPLACEMENT

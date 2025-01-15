@@ -10,30 +10,32 @@
 	active_power_usage = 80
 	var/eat_dir = SOUTH
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/plumbing/grinder_chemical)
+
 /obj/machinery/plumbing/grinder_chemical/Initialize(mapload, bolt)
 	. = ..()
 	AddComponent(/datum/component/plumbing/simple_supply, bolt)
 	var/static/list/loc_connections = list(
-		COMSIG_ATOM_ENTERED = .proc/on_entered,
+		COMSIG_ATOM_ENTERED = PROC_REF(on_entered),
 	)
 	AddElement(/datum/element/connect_loc, loc_connections)
+	update_appearance() //so the input/output pipes will overlay properly during init
 
 /obj/machinery/plumbing/grinder_chemical/setDir(newdir)
 	. = ..()
 	eat_dir = newdir
 
-/obj/machinery/plumbing/grinder_chemical/CanAllowThrough(atom/movable/AM)
+/obj/machinery/plumbing/grinder_chemical/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
 	if(!anchored)
 		return
-	var/move_dir = get_dir(loc, AM.loc)
-	if(move_dir == eat_dir)
+	if(border_dir == eat_dir)
 		return TRUE
 
 /obj/machinery/plumbing/grinder_chemical/proc/on_entered(datum/source, atom/movable/AM)
 	SIGNAL_HANDLER
 
-	INVOKE_ASYNC(src, .proc/grind, AM)
+	INVOKE_ASYNC(src, PROC_REF(grind), AM)
 
 /obj/machinery/plumbing/grinder_chemical/proc/grind(atom/AM)
 	if(machine_stat & NOPOWER)
@@ -42,18 +44,15 @@
 		return
 	if(!isitem(AM))
 		return
-	var/obj/item/I = AM
-	if(I.juice_results || I.grind_results)
-		if(I.juice_results)
-			I.on_juice()
-			reagents.add_reagent_list(I.juice_results)
-			if(I.reagents)
-				I.reagents.trans_to(src, I.reagents.total_volume, transfered_by = src)
-			qdel(I)
+	if(istype(AM, /obj/item/reagent_containers))
+		var/obj/item/reagent_containers/reag_container = AM
+		if(reag_container.prevent_grinding) // don't grind floorpill
 			return
-		I.on_grind()
-		reagents.add_reagent_list(I.grind_results)
-		if(I.reagents)
-			I.reagents.trans_to(src, I.reagents.total_volume, transfered_by = src)
-		qdel(I)
+	var/obj/item/I = AM
+	if(I.grind_results || I.juice_results)
+		use_power(active_power_usage)
+		if(I.grind_results)
+			I.grind(src, src)
+		else if (I.juice_results)
+			I.juice(src, src)
 

@@ -2,18 +2,20 @@
 	name = "gondola"
 	real_name = "gondola"
 	desc = "The silent walker. This one seems to be part of a delivery agency."
-	response_help = "pets"
-	response_disarm = "bops"
-	response_harm = "kicks"
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
+	response_disarm_continuous = "bops"
+	response_disarm_simple = "bop"
+	response_harm_continuous = "kicks"
+	response_harm_simple = "kick"
 	faction = list("gondola")
 	turns_per_move = 10
 	icon = 'icons/obj/supplypods.dmi'
 	icon_state = "gondola"
 	icon_living = "gondola"
-	pixel_x = -16//2x2 sprite
-	pixel_y = -5
+	SET_BASE_PIXEL(-16, -5) //2x2 sprite
 	layer = TABLE_LAYER//so that deliveries dont appear underneath it
-	loot = list(/obj/effect/decal/cleanable/blood/gibs, /obj/item/stack/sheet/animalhide/gondola = 2, /obj/item/reagent_containers/food/snacks/meat/slab/gondola = 2)
+	loot = list(/obj/effect/decal/cleanable/blood/gibs, /obj/item/stack/sheet/animalhide/gondola = 2, /obj/item/food/meat/slab/gondola = 2)
 	//Gondolas aren't affected by cold.
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	minbodytemp = 0
@@ -23,6 +25,8 @@
 	del_on_death = TRUE
 	var/opened = FALSE
 	var/obj/structure/closet/supplypod/centcompod/linked_pod
+
+CREATION_TEST_IGNORE_SUBTYPES(/mob/living/simple_animal/pet/gondola/gondolapod)
 
 /mob/living/simple_animal/pet/gondola/gondolapod/Initialize(mapload, pod)
 	linked_pod = pod
@@ -60,7 +64,7 @@
 /mob/living/simple_animal/pet/gondola/gondolapod/setOpened()
 	opened = TRUE
 	update_icon()
-	addtimer(CALLBACK(src, /atom/.proc/setClosed), 50)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, setClosed)), 50)
 
 /mob/living/simple_animal/pet/gondola/gondolapod/setClosed()
 	opened = FALSE

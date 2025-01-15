@@ -2,17 +2,18 @@
 	name = "reactive armour shell"
 	desc = "An experimental suit of armour, awaiting installation of an anomaly core."
 	icon_state = "reactiveoff"
-	icon = 'icons/obj/clothing/suits.dmi'
+	icon = 'icons/obj/clothing/suits/armor.dmi'
 	w_class = WEIGHT_CLASS_BULKY
 
 /obj/item/reactive_armour_shell/attackby(obj/item/weapon, mob/user, params)
 	..()
 	var/static/list/anomaly_armour_types = list(
-		/obj/effect/anomaly/bluespace 	            = /obj/item/clothing/suit/armor/reactive/teleport,
-		/obj/effect/anomaly/delimber				= /obj/item/clothing/suit/armor/reactive/delimbering,
-		/obj/effect/anomaly/flux 	           		= /obj/item/clothing/suit/armor/reactive/tesla,
-		/obj/effect/anomaly/grav	                = /obj/item/clothing/suit/armor/reactive/repulse,
-		/obj/effect/anomaly/hallucination			= /obj/item/clothing/suit/armor/reactive/hallucinating
+		/obj/effect/anomaly/bluespace = /obj/item/clothing/suit/armor/reactive/teleport,
+		/obj/effect/anomaly/bioscrambler = /obj/item/clothing/suit/armor/reactive/bioscrambling,
+		/obj/effect/anomaly/flux = /obj/item/clothing/suit/armor/reactive/tesla,
+		/obj/effect/anomaly/grav = /obj/item/clothing/suit/armor/reactive/repulse,
+		/obj/effect/anomaly/hallucination = /obj/item/clothing/suit/armor/reactive/hallucinating,
+		/obj/effect/anomaly/blood = /obj/item/clothing/suit/armor/reactive/bleed
 		)
 
 	if(istype(weapon, /obj/item/assembly/signaler/anomaly))
@@ -32,7 +33,7 @@
 	icon_state = "reactiveoff"
 	item_state = "reactiveoff"
 	blood_overlay_type = "armor"
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 100, "stamina" = 0)
+	armor_type = /datum/armor/armor_reactive
 	actions_types = list(/datum/action/item_action/toggle)
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 	hit_reaction_chance = 50
@@ -49,6 +50,12 @@
 	///The cooldown itself of the reactive armor for when it can activate again.
 	COOLDOWN_DECLARE(reactivearmor_cooldown)
 	pocket_storage_component_path = FALSE
+
+
+/datum/armor/armor_reactive
+	fire = 100
+	acid = 100
+	bleed = 10
 
 /obj/item/clothing/suit/armor/reactive/attack_self(mob/user)
 	active = !(active)
@@ -119,7 +126,7 @@
 	if(!active)
 		return FALSE
 	if(isprojectile(hitby))
-		var/obj/item/projectile/P = hitby
+		var/obj/projectile/P = hitby
 		if(P.martial_arts_no_deflect)
 			return FALSE
 	return TRUE
@@ -207,7 +214,7 @@
 	in_stealth = TRUE
 	owner.visible_message("<span class='danger'>[owner] is hit by [attack_text] in the chest!</span>") //We pretend to be hit, since blocking it would stop the message otherwise
 	owner.alpha = 0
-	addtimer(CALLBACK(src, .proc/end_stealth, owner), stealth_time)
+	addtimer(CALLBACK(src, PROC_REF(end_stealth), owner), stealth_time)
 	return TRUE
 
 /obj/item/clothing/suit/armor/reactive/stealth/proc/end_stealth(mob/living/carbon/human/owner)
@@ -238,12 +245,12 @@
 /obj/item/clothing/suit/armor/reactive/tesla/dropped(mob/user)
 	..()
 	if(istype(user))
-		user.flags_1 &= ~TESLA_IGNORE_1
+		user.flags_1 |= ~TESLA_IGNORE_1
 
 /obj/item/clothing/suit/armor/reactive/tesla/equipped(mob/user, slot)
 	..()
 	if(slot_flags & slot) //Was equipped to a valid slot for this item?
-		user.flags_1 |= TESLA_IGNORE_1
+		user.flags_1 &= TESLA_IGNORE_1
 
 /obj/item/clothing/suit/armor/reactive/tesla/cooldown_activation(mob/living/carbon/human/owner)
 	var/datum/effect_system/spark_spread/sparks = new /datum/effect_system/spark_spread
@@ -365,28 +372,57 @@
 	owner.hallucination = clamp(owner.hallucination, 0, 150)
 	return TRUE
 
-//Delimbering
+//Bioscrambling
 
-/obj/item/clothing/suit/armor/reactive/delimbering
-	name = "reactive delimbering armor"
+/obj/item/clothing/suit/armor/reactive/bioscrambling
+	name = "reactive bioscrambling armor"
 	desc = "An experimental suit of armor with sensitive detectors hooked up to a biohazard release valve. It scrambles the bodies of those around."
 	cooldown_message = "<span class='danger'>The connection is currently out of sync... Recalibrating.</span>"
 	emp_message = "<span class='warning'>You feel the armor squirm.</span>"
 	///Range of the effect.
 	var/range = 4
 
-/obj/item/clothing/suit/armor/reactive/delimbering/cooldown_activation(mob/living/carbon/human/owner)
+/obj/item/clothing/suit/armor/reactive/bioscrambling/cooldown_activation(mob/living/carbon/human/owner)
 	var/datum/effect_system/spark_spread/sparks = new /datum/effect_system/spark_spread
 	sparks.set_up(1, 1, src)
 	sparks.start()
 	return ..()
 
-/obj/item/clothing/suit/armor/reactive/delimbering/reactive_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+/obj/item/clothing/suit/armor/reactive/bioscrambling/reactive_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
 	owner.visible_message("<span class='danger'>[src] blocks [attack_text], biohazard body scramble released!</span>")
-	delimber_pulse(owner, range, FALSE, TRUE)
+	bioscrambler_pulse(owner, range, FALSE, TRUE)
 	return TRUE
 
-/obj/item/clothing/suit/armor/reactive/delimbering/emp_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+/obj/item/clothing/suit/armor/reactive/bioscrambling/emp_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
 	owner.visible_message("<span class='danger'>[src] blocks [attack_text], but pulls a massive charge of biohazard material into [owner] from the surrounding environment!</span>")
-	delimber_pulse(owner, range, TRUE, TRUE)
+	bioscrambler_pulse(owner, range, TRUE, TRUE)
+	return TRUE
+
+//Bleeding
+
+/obj/item/clothing/suit/armor/reactive/bleed
+	name = "reactive bleed armor"
+	desc = "An experimental suit of armor with sensitive detectors hooked up to a biohazard release valve. It has some kind of blood boiling anomaly inside."
+	cooldown_message = "<span class='danger'>Your blood runs cold...</span>"
+	emp_message = "<span class='warning'>Oh fuck...</span>"
+	///Range of the effect.
+	var/range = 4
+
+/obj/item/clothing/suit/armor/reactive/bleed/cooldown_activation(mob/living/carbon/human/owner)
+	var/datum/effect_system/spark_spread/sparks = new /datum/effect_system/spark_spread
+	sparks.set_up(1, 1, src)
+	sparks.start()
+	return ..()
+
+/obj/item/clothing/suit/armor/reactive/bleed/reactive_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+	owner.visible_message("<span class='danger'>[src] blocks [attack_text], the blood anomaly from within releasing a massive cloud of razors!</span>")
+	owner.AddComponent(/datum/component/pellet_cloud, projectile_type=/obj/projectile/bullet/shrapnel/bleed, magnitude=3)
+	playsound(src, 'sound/weapons/shrapnel.ogg', 70, TRUE)
+	return TRUE
+
+/obj/item/clothing/suit/armor/reactive/bleed/emp_activation(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+	owner.visible_message("<span class='danger'>[src] blocks [attack_text], but pulls a massive charge of biohazard material into [owner] from the surrounding environment!</span>")
+	owner.AddComponent(/datum/component/pellet_cloud, projectile_type=/obj/projectile/bullet/shrapnel/bleed, magnitude=5)
+	owner.add_bleeding(BLEED_CRITICAL)
+	playsound(src, 'sound/weapons/shrapnel.ogg', 70, TRUE)
 	return TRUE

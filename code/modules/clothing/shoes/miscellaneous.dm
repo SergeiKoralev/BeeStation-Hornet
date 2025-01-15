@@ -1,9 +1,3 @@
-/obj/item/clothing/shoes/proc/step_action() //this was made to rewrite clown shoes squeaking
-	SEND_SIGNAL(src, COMSIG_SHOES_STEP_ACTION)
-
-/obj/item/clothing/shoes/sneakers/mime
-	name = "mime shoes"
-	greyscale_colors = "#ffffff#ffffff"
 
 /obj/item/clothing/shoes/combat //basic syndicate combat boots for nuke ops and mob corpses
 	name = "combat boots"
@@ -12,39 +6,63 @@
 	item_state = "jackboots"
 	lefthand_file = 'icons/mob/inhands/equipment/security_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/security_righthand.dmi'
-	armor = list("melee" = 25, "bullet" = 25, "laser" = 25, "energy" = 25, "bomb" = 50, "bio" = 10, "rad" = 0, "fire" = 70, "acid" = 50, "stamina" = 30)
+	armor_type = /datum/armor/shoes_combat
 	strip_delay = 40
 	resistance_flags = NONE
-	permeability_coefficient = 0.05 //Thick soles, and covers the ankle
 	pocket_storage_component_path = /datum/component/storage/concrete/pockets/shoes
+
+
+/datum/armor/shoes_combat
+	melee = 25
+	bullet = 25
+	laser = 25
+	energy = 25
+	bomb = 50
+	bio = 90
+	fire = 70
+	acid = 50
+	stamina = 30
+	bleed = 20
 
 /obj/item/clothing/shoes/combat/swat //overpowered boots for death squads
 	name = "\improper SWAT boots"
 	desc = "High speed, no drag combat boots."
-	permeability_coefficient = 0.01
 	clothing_flags = NOSLIP
-	armor = list("melee" = 40, "bullet" = 30, "laser" = 25, "energy" = 25, "bomb" = 50, "bio" = 30, "rad" = 30, "fire" = 90, "acid" = 50, "stamina" = 30)
+	armor_type = /datum/armor/combat_swat
+
+
+/datum/armor/combat_swat
+	melee = 40
+	bullet = 30
+	laser = 25
+	energy = 25
+	bomb = 50
+	bio = 100
+	rad = 30
+	fire = 90
+	acid = 50
+	stamina = 30
+	bleed = 20
 
 /obj/item/clothing/shoes/sandal
 	desc = "A pair of rather plain wooden sandals."
 	name = "sandals"
 	icon_state = "wizard"
+	custom_materials = list(/datum/material/wood = MINERAL_MATERIAL_AMOUNT * 0.5)
 	strip_delay = 50
 	equip_delay_other = 50
-	permeability_coefficient = 0.9
+	armor_type = /datum/armor/shoes_sandal
 	strip_delay = 5
 
-/obj/item/clothing/shoes/sneakers/marisa
-	desc = "A pair of magic black shoes."
-	name = "magic shoes"
-	worn_icon_state = "marisa"
-	greyscale_colors = "#545454#ffffff"
-	greyscale_config = /datum/greyscale_config/sneakers_marisa
-	greyscale_config_worn = null
-	strip_delay = 5
-	equip_delay_other = 50
-	permeability_coefficient = 0.9
-	resistance_flags = FIRE_PROOF |  ACID_PROOF
+
+/datum/armor/shoes_sandal
+	bio = 10
+
+/obj/item/clothing/shoes/sandal/alt
+	desc = "A pair of shiny black wooden sandals."
+	name = "black sandals"
+	icon_state = "blacksandals"
+	item_state = "blacksandals"
 
 /obj/item/clothing/shoes/sandal/magic
 	name = "magical sandals"
@@ -55,22 +73,33 @@
 	desc = "A pair of yellow rubber boots, designed to prevent slipping on wet surfaces."
 	name = "galoshes"
 	icon_state = "galoshes"
-	permeability_coefficient = 0.01
 	clothing_flags = NOSLIP
 	slowdown = SHOES_SLOWDOWN+1
 	strip_delay = 30
 	equip_delay_other = 50
 	resistance_flags = NONE
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 40, "acid" = 75, "stamina" = 0)
+	armor_type = /datum/armor/shoes_galoshes
 	can_be_bloody = FALSE
 	custom_price = 100
+
+
+/datum/armor/shoes_galoshes
+	bio = 100
+	fire = 40
+	acid = 75
 
 /obj/item/clothing/shoes/galoshes/dry
 	name = "absorbent galoshes"
 	desc = "A pair of orange rubber boots, designed to prevent slipping on wet surfaces while also drying them."
 	icon_state = "galoshes_dry"
 
-/obj/item/clothing/shoes/galoshes/dry/step_action()
+/obj/item/clothing/shoes/galoshes/dry/Initialize(mapload)
+	. = ..()
+	RegisterSignal(src, COMSIG_SHOES_STEP_ACTION, PROC_REF(on_step))
+
+/obj/item/clothing/shoes/galoshes/dry/proc/on_step()
+	SIGNAL_HANDLER
+
 	var/turf/open/t_loc = get_turf(src)
 	SEND_SIGNAL(t_loc, COMSIG_TURF_MAKE_DRY, TURF_WET_WATER, TRUE, INFINITY)
 
@@ -86,7 +115,7 @@
 
 /obj/item/clothing/shoes/clown_shoes/Initialize(mapload)
 	. = ..()
-	LoadComponent(/datum/component/squeak, list('sound/effects/clownstep1.ogg'=1,'sound/effects/clownstep2.ogg'=1), 50)
+	LoadComponent(/datum/component/squeak, list('sound/effects/clownstep1.ogg'=1,'sound/effects/clownstep2.ogg'=1), 50, falloff_exponent = 20)
 
 /obj/item/clothing/shoes/clown_shoes/equipped(mob/user, slot)
 	. = ..()
@@ -96,9 +125,11 @@
 		if(user.mind && user.mind.assigned_role == JOB_NAME_CLOWN)
 			SEND_SIGNAL(user, COMSIG_ADD_MOOD_EVENT, "clownshoes", /datum/mood_event/clownshoes)
 
-/obj/item/clothing/shoes/clown_shoes/dropped(mob/user)
+/obj/item/clothing/shoes/clown_shoes/dropped(mob/living/carbon/user)
 	..()
 	QDEL_NULL(waddle)
+	if(user.shoes != src)
+		return
 	if(user.mind && user.mind.assigned_role == JOB_NAME_CLOWN)
 		SEND_SIGNAL(user, COMSIG_CLEAR_MOOD_EVENT, "clownshoes")
 
@@ -130,10 +161,23 @@
 	strip_delay = 30
 	equip_delay_other = 50
 	resistance_flags = NONE
-	permeability_coefficient = 0.05 //Thick soles, and covers the ankle
+	armor_type = /datum/armor/shoes_jackboots
 	pocket_storage_component_path = /datum/component/storage/concrete/pockets/shoes
 
+
+/datum/armor/shoes_jackboots
+	bio = 90
+
+/obj/item/clothing/shoes/jackboots_replica // loadout cosmetic variant that's just a normal pair of shoes
+	name = "replica jackboots"
+	desc = "A cheap replica of Nanotrasen's Security combat boots. Unlike the real deal. This pair is better fit for everyday wear rather than combat."
+	icon_state = "jackboots"
+	item_state = "jackboots"
+	lefthand_file = 'icons/mob/inhands/equipment/security_lefthand.dmi'
+	righthand_file = 'icons/mob/inhands/equipment/security_righthand.dmi'
 /obj/item/clothing/shoes/jackboots/fast
+	name = "modified jackboots"
+	desc = "Security combat boots for combat scenarios or combat situations. This pair seems to be modified with lighter materials."
 	slowdown = -1
 
 /obj/item/clothing/shoes/winterboots
@@ -141,12 +185,16 @@
 	desc = "Boots lined with 'synthetic' animal fur."
 	icon_state = "winterboots"
 	item_state = "winterboots"
-	permeability_coefficient = 0.15
+	armor_type = /datum/armor/shoes_winterboots
 	cold_protection = FEET|LEGS
 	min_cold_protection_temperature = SHOES_MIN_TEMP_PROTECT
 	heat_protection = FEET|LEGS
 	max_heat_protection_temperature = SHOES_MAX_TEMP_PROTECT
 	pocket_storage_component_path = /datum/component/storage/concrete/pockets/shoes
+
+
+/datum/armor/shoes_winterboots
+	bio = 80
 
 /obj/item/clothing/shoes/winterboots/noslip
 	name = "high-traction winter boots"
@@ -168,10 +216,14 @@
 	item_state = "jackboots"
 	lefthand_file = 'icons/mob/inhands/equipment/security_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/security_righthand.dmi'
-	permeability_coefficient = 0.15
+	armor_type = /datum/armor/shoes_workboots
 	strip_delay = 20
 	equip_delay_other = 40
 	pocket_storage_component_path = /datum/component/storage/concrete/pockets/shoes
+
+
+/datum/armor/shoes_workboots
+	bio = 80
 
 /obj/item/clothing/shoes/workboots/mining
 	name = "mining boots"
@@ -200,11 +252,6 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, CULT_TRAIT)
 
-/obj/item/clothing/shoes/sneakers/cyborg
-	name = "cyborg boots"
-	desc = "Shoes for a cyborg costume."
-	greyscale_colors = "#4e4e4e#4e4e4e"
-
 /obj/item/clothing/shoes/laceup
 	name = "laceup shoes"
 	desc = "The height of fashion, and they're pre-polished!"
@@ -218,7 +265,11 @@
 	item_state = "roman"
 	strip_delay = 100
 	equip_delay_other = 100
-	permeability_coefficient = 0.9
+	armor_type = /datum/armor/shoes_roman
+
+
+/datum/armor/shoes_roman
+	bio = 10
 
 /obj/item/clothing/shoes/griffin
 	name = "griffon boots"
@@ -229,18 +280,22 @@
 
 /obj/item/clothing/shoes/bhop
 	name = "jump boots"
-	desc = "A specialized pair of combat boots with a built-in propulsion system for rapid foward movement."
+	desc = "A specialized pair of combat boots with a built-in propulsion system for rapid forward movement."
 	icon_state = "jetboots"
 	item_state = "jetboots"
 	resistance_flags = FIRE_PROOF
 	pocket_storage_component_path = /datum/component/storage/concrete/pockets/shoes
 	actions_types = list(/datum/action/item_action/bhop)
-	permeability_coefficient = 0.05
+	armor_type = /datum/armor/shoes_bhop
 	strip_delay = 30
 	var/jumpdistance = 5 //-1 from to see the actual distance, e.g 4 goes over 3 tiles
 	var/jumpspeed = 3
 	var/recharging_rate = 60 //default 6 seconds between each dash
 	var/recharging_time = 0 //time until next dash
+
+
+/datum/armor/shoes_bhop
+	bio = 90
 
 /obj/item/clothing/shoes/bhop/ui_action_click(mob/user, action)
 	if(!isliving(user))
@@ -281,48 +336,6 @@
 	. = ..()
 	AddComponent(/datum/component/squeak, list('sound/machines/clockcult/integration_cog_install.ogg' = 1, 'sound/magic/clockwork/fellowship_armory.ogg' = 1), 50)
 
-/obj/item/clothing/shoes/wheelys
-	name = "Wheely-Heels"
-	desc = "Uses patented retractable wheel technology. Never sacrifice speed for style - not that this provides much of either." //Thanks Fel
-	item_state = "wheelys"
-	greyscale_colors = "#545454#ffffff"
-	greyscale_config = /datum/greyscale_config/sneakers_wheelys
-	icon_state = "sneakers"
-	worn_icon_state = "wheelys"
-	actions_types = list(/datum/action/item_action/wheelys)
-	var/wheelToggle = FALSE //False means wheels are not popped out
-	var/obj/vehicle/ridden/scooter/wheelys/W
-
-/obj/item/clothing/shoes/wheelys/Initialize(mapload)
-	. = ..()
-	W = new /obj/vehicle/ridden/scooter/wheelys(null)
-
-/obj/item/clothing/shoes/wheelys/ui_action_click(mob/user, action)
-	if(!isliving(user))
-		return
-	if(!istype(user.get_item_by_slot(ITEM_SLOT_FEET), /obj/item/clothing/shoes/wheelys))
-		to_chat(user, "<span class='warning'>You must be wearing the wheely-heels to use them!</span>")
-		return
-	if(!(W.is_occupant(user)))
-		wheelToggle = FALSE
-	if(wheelToggle)
-		W.unbuckle_mob(user)
-		wheelToggle = FALSE
-		return
-	W.forceMove(get_turf(user))
-	W.buckle_mob(user)
-	wheelToggle = TRUE
-
-/obj/item/clothing/shoes/wheelys/dropped(mob/user)
-	..()
-	if(wheelToggle)
-		W.unbuckle_mob(user)
-		wheelToggle = FALSE
-
-/obj/item/clothing/shoes/wheelys/Destroy()
-	QDEL_NULL(W)
-	. = ..()
-
 /obj/item/clothing/shoes/kindleKicks
 	name = "Kindle Kicks"
 	desc = "They'll sure kindle something in you, and it's not childhood nostalgia..."
@@ -342,13 +355,13 @@
 	active = TRUE
 	set_light_color(rgb(rand(0, 255), rand(0, 255), rand(0, 255)))
 	set_light_on(active)
-	addtimer(CALLBACK(src, .proc/lightUp), 0.5 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(lightUp)), 0.5 SECONDS)
 
 /obj/item/clothing/shoes/kindleKicks/proc/lightUp(mob/user)
 	if(lightCycle < 15)
 		set_light_color(rgb(rand(0, 255), rand(0, 255), rand(0, 255)))
 		lightCycle++
-		addtimer(CALLBACK(src, .proc/lightUp), 0.5 SECONDS)
+		addtimer(CALLBACK(src, PROC_REF(lightUp)), 0.5 SECONDS)
 	else
 		lightCycle = 0
 		active = FALSE

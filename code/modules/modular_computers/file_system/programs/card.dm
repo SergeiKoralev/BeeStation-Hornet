@@ -77,7 +77,7 @@
 		var/list/info = sub_managers[access_text]
 		var/access = text2num(access_text)
 		if((access in id_card.access) && ((info["region"] in target_dept) || !length(target_dept)))
-			region_access += info["region"]
+			region_access |= info["region"]
 			//I don't even know what I'm doing anymore
 			head_types += info["head"]
 
@@ -155,7 +155,7 @@
 			if(!card_slot2)
 				return
 			if(target_id_card)
-				GLOB.data_core.manifest_modify(target_id_card.registered_name, target_id_card.assignment, target_id_card.hud_state)
+				GLOB.manifest.modify(target_id_card.registered_name, target_id_card.assignment, target_id_card.hud_state)
 				return card_slot2.try_eject(user)
 			else
 				var/obj/item/I = user.get_active_held_item()
@@ -214,23 +214,25 @@
 			else
 				if(minor && !(target in head_subordinates))
 					return
-				var/list/new_access = list()
-				if(is_centcom)
-					new_access = get_centcom_access(target)
-				else
-					var/datum/job/job
-					for(var/jobtype in subtypesof(/datum/job))
-						var/datum/job/J = new jobtype
-						if(J.title == target)
-							job = J
-							break
-					if(!job)
-						to_chat(user, "<span class='warning'>No class exists for this job: [target].</span>")
+				var/datum/job/jobdatum
+				if(!is_centcom) // station level
+					jobdatum = SSjob.GetJob(target)
+					if(!jobdatum)
+						to_chat(usr, "<span class='warning'>No log exists for this job.</span>")
+						stack_trace("bad job string '[target]' is given through a portable ID console program by '[ckey(usr)]'")
+						playsound(computer, 'sound/machines/terminal_prompt_deny.ogg', 50, FALSE)
 						return
-					new_access = job.get_access()
-				log_id("[key_name(usr)] changed [target_id_card] assignment to '[target]', overriding all previous access using [user_id_card] via a portable ID console at [AREACOORD(usr)].")
-				target_id_card.access -= get_all_centcom_access() + get_all_accesses()
-				target_id_card.access |= new_access
+
+					target_id_card.access -= get_all_accesses()
+					target_id_card.access |= jobdatum.get_access()
+				else // centcom level
+					target_id_card.access -= get_all_centcom_access()
+					target_id_card.access |= get_centcom_access(target)
+
+				// tablet program doesn't change bank/manifest status. check 'card.dm' for the detail
+
+				log_id("[key_name(usr)] changed [target_id_card] assignment to '[target]', manipulating it to the default access of the job using [user_id_card] via a portable ID console at [AREACOORD(usr)].")
+
 				target_id_card.assignment = target
 				target_id_card.update_label()
 
@@ -298,12 +300,12 @@
 	else if(isnull(departments))
 		departments = list(
 			CARDCON_DEPARTMENT_COMMAND = list(JOB_NAME_CAPTAIN),//lol
-			CARDCON_DEPARTMENT_ENGINEERING = GLOB.engineering_positions,
-			CARDCON_DEPARTMENT_MEDICAL = GLOB.medical_positions,
-			CARDCON_DEPARTMENT_SCIENCE = GLOB.science_positions,
-			CARDCON_DEPARTMENT_SECURITY = GLOB.security_positions,
-			CARDCON_DEPARTMENT_SUPPLY = GLOB.supply_positions,
-			CARDCON_DEPARTMENT_CIVILIAN = GLOB.civilian_positions | GLOB.gimmick_positions
+			CARDCON_DEPARTMENT_ENGINEERING = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_ENGINEERING),
+			CARDCON_DEPARTMENT_MEDICAL = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_MEDICAL),
+			CARDCON_DEPARTMENT_SCIENCE = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SCIENCE),
+			CARDCON_DEPARTMENT_SECURITY = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SECURITY),
+			CARDCON_DEPARTMENT_SUPPLY = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_CARGO),
+			CARDCON_DEPARTMENT_CIVILIAN = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_CIVILIAN)
 		)
 	data["jobs"] = list()
 	for(var/department in departments)
@@ -343,7 +345,7 @@
 	return data
 
 /datum/computer_file/program/card_mod/ui_data(mob/user)
-	var/list/data = get_header_data()
+	var/list/data = list()
 
 	data["station_name"] = station_name()
 

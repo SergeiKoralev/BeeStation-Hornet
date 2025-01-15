@@ -88,7 +88,7 @@
 			binary.alert_silenced = !binary.alert_silenced
 
 /datum/computer_file/program/filemanager/ui_data(mob/user)
-	var/list/data = get_header_data()
+	var/list/data = list()
 
 	var/obj/item/computer_hardware/hard_drive/HDD = computer.all_components[MC_HDD]
 	var/obj/item/computer_hardware/hard_drive/portable/RHDD = computer.all_components[MC_SDD]
@@ -129,10 +129,10 @@
 	return data
 
 /datum/computer_file/program/proc/check_filename(name)
-	if(CHAT_FILTER_CHECK(name))
+	if(OOC_FILTER_CHECK(name))
 		alert(usr, "Filename contains prohibited words.")
 		return
-	if(!reject_bad_text(name, 32, ascii_only = TRUE, alphanumeric_only = TRUE, underscore_allowed = TRUE) || lowertext(name) != name)
+	if(!reject_bad_text(name, 32, ascii_only = TRUE, alphanumeric_only = TRUE, underscore_allowed = TRUE) || LOWER_TEXT(name) != name)
 		alert(usr, "All filenames must be 32 characters or less, lowercase, and cannot contain: < > / and \\")
 		return
 	return name

@@ -62,6 +62,8 @@
 	var/start_sound = 'sound/items/airhorn2.ogg'
 	var/start_sound_volume = 50
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/computer/arena)
+
 /obj/machinery/computer/arena/Initialize(mapload, obj/item/circuitboard/C)
 	. = ..()
 	LoadDefaultArenas()
@@ -171,7 +173,7 @@
 		var/list/keys = list()
 		for(var/mob/M in GLOB.player_list)
 			keys += M.client
-		var/client/selection = input("Please, select a player!", "Team member", null, null) as null|anything in sortKey(keys)
+		var/client/selection = input("Please, select a player!", "Team member", null, null) as null|anything in sort_key(keys)
 		//Could be freeform if you want to add disconnected i guess
 		if(!selection)
 			return
@@ -191,7 +193,7 @@
 	if(!isobserver(oldbody))
 		return
 	var/mob/living/carbon/human/M = new/mob/living/carbon/human(get_turf(spawnpoint))
-	oldbody.client.prefs.active_character.copy_to(M)
+	oldbody.client.prefs.safe_transfer_prefs_to(M)
 	M.set_species(/datum/species/human) // Could use setting per team
 	M.equipOutfit(outfits[team] ? outfits[team] : default_outfit)
 	M.faction += team //In case anyone wants to add team based stuff to arena special effects
@@ -237,7 +239,7 @@
 	for(var/mob/M in all_contestants())
 		to_chat(M,"<span class='userdanger'>The gates will open in [timetext]!</span>")
 	start_time = world.time + start_delay
-	addtimer(CALLBACK(src,.proc/begin),start_delay)
+	addtimer(CALLBACK(src,PROC_REF(begin)),start_delay)
 	for(var/team in teams)
 		var/obj/machinery/arena_spawn/team_spawn = get_spawn(team)
 		var/obj/effect/countdown/arena/A = new(team_spawn)
@@ -264,9 +266,9 @@
 		if(D.id != arena_id)
 			continue
 		if(closed)
-			INVOKE_ASYNC(D, /obj/machinery/door/poddoor.proc/close)
+			INVOKE_ASYNC(D, TYPE_PROC_REF(/obj/machinery/door/poddoor, close))
 		else
-			INVOKE_ASYNC(D, /obj/machinery/door/poddoor.proc/open)
+			INVOKE_ASYNC(D, TYPE_PROC_REF(/obj/machinery/door/poddoor, open))
 
 /obj/machinery/computer/arena/Topic(href, href_list)
 	if(..())
@@ -328,7 +330,7 @@
 	var/arena_turfs = get_arena_turfs()
 	for(var/mob/living/L in GLOB.mob_living_list)
 		if(L.stat != DEAD && (get_turf(L) in arena_turfs))
-			var/obj/item/reagent_containers/food/drinks/trophy/gold_cup/G = new(get_turf(L))
+			var/obj/item/reagent_containers/cup/glass/trophy/gold_cup/G = new(get_turf(L))
 			G.name = "[L.real_name]'s Trophy"
 
 /obj/machinery/computer/arena/ui_interact(mob/user, ui_key, datum/tgui/ui, force_open, datum/tgui/master_ui, datum/ui_state/state)

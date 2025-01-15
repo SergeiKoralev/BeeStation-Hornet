@@ -1,5 +1,8 @@
 // Held by /obj/machinery/modular_computer to reduce amount of copy-pasted code.
 //TODO: REFACTOR THIS SPAGHETTI CODE, MAKE IT A COMPUTER_HARDWARE COMPONENT OR REMOVE IT
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/modular_computer/processor)
+
 /obj/item/modular_computer/processor
 	name = "processing unit"
 	desc = "You shouldn't see this. If you do, report it."
@@ -32,7 +35,7 @@
 	hardware_flag = machinery_computer.hardware_flag
 	max_hardware_size = machinery_computer.max_hardware_size
 	steel_sheet_cost = machinery_computer.steel_sheet_cost
-	obj_integrity = machinery_computer.obj_integrity
+	update_integrity(machinery_computer.get_integrity())
 	max_integrity = machinery_computer.max_integrity
 	integrity_failure = machinery_computer.integrity_failure
 	base_active_power_usage = machinery_computer.base_active_power_usage
@@ -46,7 +49,7 @@
 		return machinery_computer.update_icon()
 
 // This thing is not meant to be used on it's own, get topic data from our machinery owner.
-//obj/item/modular_computer/processor/canUseTopic(atom/movable/M, be_close=FALSE, no_dextery=FALSE, no_tk=FALSE)
+//obj/item/modular_computer/processor/canUseTopic(atom/movable/M, be_close=FALSE, no_dexterity=FALSE, no_tk=FALSE)
 //	if(!machinery_computer)
 //		return 0
 

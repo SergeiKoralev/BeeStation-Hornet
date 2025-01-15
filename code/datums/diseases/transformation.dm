@@ -80,10 +80,11 @@
 /datum/disease/transformation/proc/replace_banned_player(var/mob/living/new_mob) // This can run well after the mob has been transferred, so need a handle on the new mob to kill it if needed.
 	set waitfor = FALSE
 
+	affected_mob.playable_bantype = bantype
 	affected_mob.ghostize(TRUE,SENTIENCE_FORCE)
 	to_chat(affected_mob, "Your mob has been taken over by a ghost! Appeal your job ban if you want to avoid this in the future!")
 
-	var/list/mob/dead/observer/candidates = pollCandidatesForMob("Do you want to play as [affected_mob.name]?", bantype, null, bantype, 50, affected_mob)
+	var/list/mob/dead/observer/candidates = poll_candidates_for_mob("Do you want to play as [affected_mob.name]?", bantype, null, 7.5 SECONDS, affected_mob, ignore_category = FALSE)
 	if(LAZYLEN(candidates))
 		var/mob/dead/observer/C = pick(candidates)
 		message_admins("[key_name_admin(C)] has taken control of ([key_name_admin(affected_mob)]) to replace a jobbanned player.")
@@ -108,7 +109,7 @@
 	stage5	= list("<span class='danger'>Your skin feels as if it's about to burst off!</span>")
 	new_form = /mob/living/silicon/robot
 	infectable_biotypes = list(MOB_ORGANIC, MOB_UNDEAD, MOB_ROBOTIC)
-	bantype = "Cyborg"
+	bantype = JOB_NAME_CYBORG
 
 /datum/disease/transformation/robot/stage_act()
 	..()
@@ -156,9 +157,8 @@
 
 /datum/disease/transformation/slime
 	name = "Advanced Mutation Transformation"
-	cure_text = "frost oil"
-	cures = list(/datum/reagent/consumable/frostoil)
-	cure_chance = 80
+	cure_text = "Below Freezing Temperature"
+	cures = list()
 	agent = "Advanced Mutation Toxin"
 	desc = "This highly concentrated extract converts anything into more of itself."
 	danger = DISEASE_BIOHAZARD
@@ -172,6 +172,9 @@
 
 /datum/disease/transformation/slime/stage_act()
 	..()
+	var/mob/living/carbon/H = affected_mob
+	if(H.bodytemperature < T0C)
+		cure()
 	switch(stage)
 		if(1)
 			if(ishuman(affected_mob) && affected_mob.dna)
@@ -181,7 +184,7 @@
 			if(ishuman(affected_mob))
 				var/mob/living/carbon/human/human = affected_mob
 				if(human.dna.species.id != "slime" && affected_mob.dna.species.id != "stargazer" && affected_mob.dna.species.id != "lum")
-					human.set_species(/datum/species/jelly/slime)
+					human.set_species(/datum/species/oozeling/slime)
 
 /datum/disease/transformation/corgi
 	name = "The Barkening"
@@ -210,7 +213,7 @@
 
 /datum/disease/transformation/morph
 	name = "Gluttony's Blessing"
-	cure_text = /datum/reagent/consumable/nothing
+	cure_text = "Nothing"
 	cures = list(/datum/reagent/medicine/adminordrazine)
 	agent = "Gluttony's Blessing"
 	desc = "A 'gift' from somewhere terrible."
@@ -270,7 +273,7 @@
 	cure_text = "Something that would kill off the tiny cats."
 	spread_text = "Acute"
 	disease_flags = CURABLE|CAN_CARRY|CAN_RESIST
-	cures = list(/datum/reagent/consumable/cocoa, /datum/reagent/consumable/cocoa/hot_cocoa) //kills all the tiny cats that infected your organism
+	cures = list(/datum/reagent/consumable/cocoa, /datum/reagent/consumable/hot_cocoa) //kills all the tiny cats that infected your organism
 	cure_chance = 25
 	stage_prob = 3
 	agent = "Nano-feline Toxoplasmosis"
@@ -308,7 +311,7 @@
 				to_chat(affected_mob, "<span class='danger'>You cough out a furball.</span>")
 
 /datum/disease/transformation/felinid/after_add()
-	RegisterSignal(affected_mob, COMSIG_MOB_SAY, .proc/handle_speech)
+	RegisterSignal(affected_mob, COMSIG_MOB_SAY, PROC_REF(handle_speech))
 
 /datum/disease/transformation/felinid/proc/handle_speech(datum/source, list/speech_args)
 	SIGNAL_HANDLER
@@ -385,3 +388,24 @@
 	stage5	= list("<span class='userdanger'>You have become one of Legion. You are one with the Necropolis now, and have no other loyalties. Serve well.</span>")
 	new_form = /mob/living/simple_animal/hostile/asteroid/hivelord/legion/tendril
 	infectable_biotypes = list(MOB_ORGANIC, MOB_INORGANIC, MOB_UNDEAD)
+
+/datum/disease/transformation/psyphoza
+	name = "Acute Fungal Infection"
+	cure_text = "Something that would kill off mold."
+	spread_text = "Acute"
+	disease_flags = CURABLE|CAN_CARRY|CAN_RESIST
+	cures = list(/datum/reagent/space_cleaner, /datum/reagent/consumable/milk, /datum/reagent/toxin/plantbgone/weedkiller)
+	cure_chance = 25
+	stage_prob = 3
+	agent = "Acute Fungal Infection"
+	desc = "A system of fungus, taking over the host body."
+	is_mutagenic = TRUE
+	danger = DISEASE_BIOHAZARD
+	visibility_flags = 0
+	stage1	= list("You feel oddly fungal.")
+	stage2	= list("<span class='danger'>You head throbs.</span>")
+	stage3	= list("<span class='danger'>Your vision dims briefly.</span>")
+	stage4	= list("<span class='danger'>You sense something you can't see.</span>")
+	stage5	= list("<span class='danger'>Your head sprouts a cap, and your eyes rupture.</span>")
+	infectable_biotypes = list(MOB_ORGANIC, MOB_INORGANIC, MOB_UNDEAD)
+	new_form = /mob/living/carbon/human/species/psyphoza

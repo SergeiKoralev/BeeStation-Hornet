@@ -1,5 +1,5 @@
 /obj/machinery/modular_fabricator/exosuit_fab
-	icon = 'icons/obj/robotics.dmi'
+	icon = 'icons/obj/robotics.dmi' //Previously known as "/obj/machinery/mecha_part_fabricator", before modular_fabricator refactor of 2021
 	icon_state = "fab-idle"
 	name = "exosuit fabricator"
 	desc = "An advanced machine containing many internal robotic arms which fabricate components for robots and exosuits."
@@ -19,13 +19,14 @@
 	categories = list(
 		"Cyborg",
 		"Ripley",
-		"Firefighter",
 		"Odysseus",
+		"Clarke",
 		"Gygax",
 		"Durand",
 		"H.O.N.K",
 		"Phazon",
 		"Exosuit Equipment",
+		"Exosuit Ammunition",
 		"Cyborg Upgrade Modules",
 		"IPC Components",
 		"Cybernetics",
@@ -56,7 +57,7 @@
 	. = ..()
 	var/datum/material/M = id_inserted
 	add_overlay("fab-load-[M.name]")
-	addtimer(CALLBACK(src, /atom/proc/cut_overlay, "fab-load-[M.name]"), 10)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, cut_overlay), "fab-load-[M.name]"), 10)
 
 /obj/machinery/modular_fabricator/exosuit_fab/set_default_sprite()
 	cut_overlay("fab-active")

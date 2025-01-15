@@ -1,3 +1,5 @@
+
+#define DECISECONDS_IN_DAY 864000	//number of deciseconds in a day
 #define MIDNIGHT_ROLLOVER		864000	//number of deciseconds in a day
 
 #define JANUARY		1
@@ -31,13 +33,19 @@ When using time2text(), please use "DDD" to find the weekday. Refrain from using
 
 */
 
-#define MONDAY		"Mon"
-#define TUESDAY	"Tue"
-#define WEDNESDAY	"Wed"
-#define THURSDAY	"Thu"
-#define FRIDAY		"Fri"
-#define SATURDAY	"Sat"
-#define SUNDAY		"Sun"
+#define MONDAY "Mon"
+#define TUESDAY "Tue"
+#define WEDNESDAY "Wed"
+#define THURSDAY "Thu"
+#define FRIDAY "Fri"
+#define SATURDAY "Sat"
+#define SUNDAY "Sun"
+
+#define INFINITE -1 // -1 is commonly used to indicate an infinite time duration
+
+#define MILLISECONDS *0.01
+
+#define DECISECONDS *1 //the base unit all of these defines are scaled by, because byond uses that as a unit of measurement for some fucking reason
 
 #define SECONDS *10
 
@@ -47,8 +55,6 @@ When using time2text(), please use "DDD" to find the weekday. Refrain from using
 
 #define TICKS *world.tick_lag
 
-#define MILLISECONDS * 0.01
-
 #define DS2TICKS(DS) ((DS)/world.tick_lag)
 
 #define TICKS2DS(T) ((T) TICKS)
@@ -56,3 +62,7 @@ When using time2text(), please use "DDD" to find the weekday. Refrain from using
 #define MS2DS(T) ((T) MILLISECONDS)
 
 #define DS2MS(T) ((T) * 100)
+
+/// Amount of years from the current year to offset in-universe
+#define YEAR_OFFSET 540
+

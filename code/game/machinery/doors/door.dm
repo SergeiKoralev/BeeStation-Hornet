@@ -1,16 +1,18 @@
 /obj/machinery/door
 	name = "door"
 	desc = "It opens and closes."
-	icon = 'icons/obj/doors/Doorint.dmi'
+	icon = 'icons/obj/doors/doorint.dmi'
 	icon_state = "door1"
-	opacity = 1
+	base_icon_state = "door"
+	opacity = TRUE
 	density = TRUE
 	move_resist = MOVE_FORCE_VERY_STRONG
 	layer = OPEN_DOOR_LAYER
 	power_channel = AREA_USAGE_ENVIRON
 	pass_flags_self = PASSDOORS
+	z_flags = Z_BLOCK_IN_DOWN | Z_BLOCK_IN_UP
 	max_integrity = 350
-	armor = list("melee" = 30, "bullet" = 30, "laser" = 20, "energy" = 20, "bomb" = 10, "bio" = 100, "rad" = 100, "fire" = 80, "acid" = 70, "stamina" = 0)
+	armor_type = /datum/armor/machinery_door
 	CanAtmosPass = ATMOS_PASS_DENSITY
 	flags_1 = PREVENT_CLICK_UNDER_1
 	ricochet_chance_mod = 0.8
@@ -40,19 +42,16 @@
 	var/unres_sides = 0 //Unrestricted sides. A bitflag for which direction (if any) can open the door with no access
 	var/open_speed = 5
 
-/obj/machinery/door/examine(mob/user)
-	. = ..()
-	if(red_alert_access)
-		if(GLOB.security_level >= SEC_LEVEL_RED)
-			. += "<span class='notice'>Due to a security threat, its access requirements have been lifted!</span>"
-		else
-			. += "<span class='notice'>In the event of a red alert, its access requirements will automatically lift.</span>"
-		. += "<span class='notice'>Its maintenance panel is <b>screwed</b> in place.</span>"
 
-/obj/machinery/door/check_access_list(list/access_list)
-	if(red_alert_access && GLOB.security_level >= SEC_LEVEL_RED)
-		return TRUE
-	return ..()
+/datum/armor/machinery_door
+	melee = 30
+	bullet = 30
+	laser = 20
+	energy = 20
+	bomb = 10
+	rad = 100
+	fire = 80
+	acid = 70
 
 /obj/machinery/door/Initialize(mapload)
 	. = ..()
@@ -66,25 +65,27 @@
 	//doors only block while dense though so we have to use the proc
 	real_explosion_block = explosion_block
 	explosion_block = EXPLOSION_BLOCK_PROC
+	RegisterSignal(SSsecurity_level, COMSIG_SECURITY_LEVEL_CHANGED, PROC_REF(check_security_level))
+
+/obj/machinery/door/examine(mob/user)
+	. = ..()
 	if(red_alert_access)
-		RegisterSignal(SSdcs, COMSIG_GLOB_SECURITY_ALERT_CHANGE, .proc/handle_alert)
+		if(SSsecurity_level.get_current_level_as_number() >= SEC_LEVEL_RED)
+			. += "<span class='notice'>Due to a security threat, its access requirements have been lifted!</span>"
+		else
+			. += "<span class='notice'>In the event of a red alert, its access requirements will automatically lift.</span>"
+		. += "<span class='notice'>Its maintenance panel is <b>screwed</b> in place.</span>"
 
-/obj/machinery/door/proc/handle_alert(datum/source, new_alert)
-	SIGNAL_HANDLER
-	if(new_alert >= SEC_LEVEL_RED)
-		visible_message("<span class='notice'>[src] whirs as it automatically lifts access requirements!</span>")
-		playsound(src, 'sound/machines/boltsup.ogg', 50, TRUE)
-
+/obj/machinery/door/check_access_list(list/access_list)
+	if(red_alert_access && SSsecurity_level.get_current_level_as_number() >= SEC_LEVEL_RED)
+		return TRUE
+	return ..()
 
 /obj/machinery/door/proc/set_init_door_layer()
 	if(density)
 		layer = closingLayer
 	else
 		layer = initial(layer)
-
-/obj/machinery/door/power_change()
-	..()
-	update_icon()
 
 /obj/machinery/door/Destroy()
 	update_freelook_sight()
@@ -96,7 +97,7 @@
 
 /obj/machinery/door/Bumped(atom/movable/AM)
 	. = ..()
-	if(operating || (obj_flags & EMAGGED))
+	if(operating)
 		return
 	if(ismob(AM))
 		var/mob/B = AM
@@ -107,22 +108,11 @@
 			if(world.time - M.last_bumped <= 10)
 				return	//Can bump-open one airlock per second. This is to prevent shock spam.
 			M.last_bumped = world.time
-			if(M.restrained() && !check_access(null))
+			if(HAS_TRAIT(M, TRAIT_HANDS_BLOCKED) && !check_access(null))
 				return
 			bumpopen(M)
 			return
 
-	if(ismecha(AM))
-		var/obj/mecha/mecha = AM
-		if(density)
-			if(mecha.occupant)
-				if(world.time - mecha.occupant.last_bumped <= 10)
-					return
-				mecha.occupant.last_bumped = world.time
-			if(mecha.occupant && (src.allowed(mecha.occupant) || src.check_access_list(mecha.operation_req_access)))
-				open()
-			else
-				do_animate("deny")
 		return
 
 	if(isitem(AM))
@@ -140,18 +130,19 @@
 	. = ..()
 	move_update_air(T)
 
-/obj/machinery/door/CanAllowThrough(atom/movable/mover, turf/target)
+/obj/machinery/door/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
 	if(.)
 		return
-	// Snowflake handling for PASSGLASS.
-	if(istype(mover) && (mover.pass_flags & PASSGLASS))
+	// Snowflake handling for PASSTRANSPARENT.
+	if(istype(mover) && (mover.pass_flags & PASSTRANSPARENT))
 		return !opacity
 
 /// Helper method for bumpopen() and try_to_activate_door(). Don't override.
 /obj/machinery/door/proc/activate_door_base(mob/user, can_close_door)
-	add_fingerprint(user)
-	if(operating || (obj_flags & EMAGGED))
+	if(user)
+		add_fingerprint(user)
+	if(operating)
 		return
 	// Cutting WIRE_IDSCAN disables normal entry
 	if(!id_scan_hacked() && allowed(user))
@@ -181,9 +172,12 @@
 	// But if we *have* cut the wire, this eventually falls through to attack_hand(), which calls try_to_activate_door(),
 	// which will fail because the door won't work if the wire is cut! Catch-22.
 	// Basically, TK won't work unless the door is all-access.
-	if(!id_scan_hacked() && !allowed())
+
+	if(user.stat || !tkMaxRangeCheck(user, src))
 		return
-	..()
+	new /obj/effect/temp_visual/telekinesis(get_turf(src))
+	add_hiddenprint(user)
+	activate_door_base(null, TRUE)
 
 /// Handles door activation via clicks, through attackby().
 /obj/machinery/door/proc/try_to_activate_door(obj/item/I, mob/user)
@@ -196,8 +190,8 @@
 		return TRUE
 	return ..()
 
-/obj/machinery/door/proc/unrestricted_side(mob/M) //Allows for specific side of airlocks to be unrestrected (IE, can exit maint freely, but need access to enter)
-	return get_dir(src, M) & unres_sides
+/obj/machinery/door/proc/unrestricted_side(mob/opener) //Allows for specific side of airlocks to be unrestrected (IE, can exit maint freely, but need access to enter)
+	return get_dir(src, opener) & unres_sides
 
 /obj/machinery/door/proc/try_to_weld(obj/item/weldingtool/W, mob/user)
 	return
@@ -242,9 +236,9 @@
 		return 1
 	return ..()
 
-/obj/machinery/door/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir)
+/obj/machinery/door/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir, armour_penetration = 0)
 	. = ..()
-	if(. && obj_integrity > 0)
+	if(. && atom_integrity > 0)
 		if(damage_amount >= 10 && prob(30))
 			spark_system.start()
 
@@ -265,21 +259,19 @@
 	if (. & EMP_PROTECT_SELF)
 		return
 	if(prob(20/severity) && (istype(src, /obj/machinery/door/airlock) || istype(src, /obj/machinery/door/window)) )
-		INVOKE_ASYNC(src, .proc/open)
+		INVOKE_ASYNC(src, PROC_REF(open))
 	if(prob(severity*10 - 20))
 		if(secondsElectrified == MACHINE_NOT_ELECTRIFIED)
 			secondsElectrified = MACHINE_ELECTRIFIED_PERMANENT
 			LAZYADD(shockedby, "\[[time_stamp()]\]EM Pulse")
-			addtimer(CALLBACK(src, .proc/unelectrify), 300)
+			addtimer(CALLBACK(src, PROC_REF(unelectrify)), 300)
 
 /obj/machinery/door/proc/unelectrify()
 	secondsElectrified = MACHINE_NOT_ELECTRIFIED
 
-/obj/machinery/door/update_icon()
-	if(density)
-		icon_state = "door1"
-	else
-		icon_state = "door0"
+/obj/machinery/door/update_icon_state()
+	icon_state = "[base_icon_state][density]"
+	return ..()
 
 /obj/machinery/door/proc/do_animate(animation)
 	switch(animation)
@@ -308,6 +300,7 @@
 	set_opacity(0)
 	sleep(open_speed)
 	set_density(FALSE)
+	z_flags &= ~(Z_BLOCK_IN_DOWN | Z_BLOCK_IN_UP)
 	sleep(open_speed)
 	layer = initial(layer)
 	update_appearance()
@@ -338,10 +331,12 @@
 	layer = closingLayer
 	if(air_tight)
 		set_density(TRUE)
+		z_flags |= Z_BLOCK_IN_DOWN | Z_BLOCK_IN_UP
 	sleep(open_speed)
 	set_density(TRUE)
+	z_flags |= Z_BLOCK_IN_DOWN | Z_BLOCK_IN_UP
 	sleep(open_speed)
-	update_icon()
+	update_appearance()
 	if(visible && !glass)
 		set_opacity(1)
 	operating = FALSE
@@ -365,8 +360,8 @@
 			L.adjustBruteLoss(DOOR_CRUSH_DAMAGE * 1.5) //Xenos go into crit after aproximately the same amount of crushes as humans.
 			L.emote("roar")
 		else if(ishuman(L)) //For humans
-			var/armour = L.run_armor_check(BODY_ZONE_CHEST, "melee")
-			var/multiplier = CLAMP(1 - (armour * 0.01), 0, 1)
+			var/armour = L.run_armor_check(BODY_ZONE_CHEST, MELEE)
+			var/multiplier = clamp(1 - (armour * 0.01), 0, 1)
 			L.adjustBruteLoss(multiplier * DOOR_CRUSH_DAMAGE)
 			L.emote("scream")
 			if(!L.IsParalyzed())
@@ -380,16 +375,16 @@
 		var/turf/location = get_turf(src)
 		//add_blood doesn't work for borgs/xenos, but add_blood_floor does.
 		L.add_splatter_floor(location)
-		log_combat(src, L, "crushed")
-	for(var/obj/mecha/M in get_turf(src))
+		log_combat(src, L, "crushed", src)
+	for(var/obj/vehicle/sealed/mecha/M in get_turf(src))
 		M.take_damage(DOOR_CRUSH_DAMAGE)
-		log_combat(src, M, "crushed")
+		log_combat(src, M, "crushed", src)
 /obj/machinery/door/proc/autoclose()
 	if(!QDELETED(src) && !density && !operating && !locked && !welded && autoclose)
 		close()
 
 /obj/machinery/door/proc/autoclose_in(wait)
-	addtimer(CALLBACK(src, .proc/autoclose), wait, TIMER_UNIQUE | TIMER_NO_HASH_WAIT | TIMER_OVERRIDE)
+	addtimer(CALLBACK(src, PROC_REF(autoclose)), wait, TIMER_UNIQUE | TIMER_NO_HASH_WAIT | TIMER_OVERRIDE)
 
 /// Is the ID Scan wire cut, or has the AI disabled it?
 /// This has a variety of non-uniform effects - it doesn't simply grant access.
@@ -434,3 +429,20 @@
 
 /obj/machinery/door/GetExplosionBlock()
 	return density ? real_explosion_block : 0
+
+/**
+ * Signal handler for checking if we notify our surrounding that access requirements are lifted accordingly to a newly set security level
+ *
+ * Arguments:
+ * * source The datum source of the signal
+ * * new_level The new security level that is in effect
+ */
+/obj/machinery/door/proc/check_security_level(datum/source, new_level)
+	SIGNAL_HANDLER
+
+	if(new_level <= SEC_LEVEL_BLUE)
+		return
+	if(!red_alert_access)
+		return
+	audible_message("<span class='notice'>[src] whirr[p_s()] as [p_they()] automatically lift[p_s()] access requirements!</span>")
+	playsound(src, 'sound/machines/boltsup.ogg', 50, TRUE)

@@ -94,9 +94,9 @@
 	name = "oxygen supply control (Computer Board)"
 	build_path = /obj/machinery/computer/atmos_control/tank/oxygen_tank
 
-/obj/item/circuitboard/computer/atmos_control/tank/toxin_tank
+/obj/item/circuitboard/computer/atmos_control/tank/plasma_tank
 	name = "plasma supply control (Computer Board)"
-	build_path = /obj/machinery/computer/atmos_control/tank/toxin_tank
+	build_path = /obj/machinery/computer/atmos_control/tank/plasma_tank
 
 /obj/item/circuitboard/computer/atmos_control/tank/air_tank
 	name = "mixed air supply control (Computer Board)"
@@ -194,6 +194,10 @@
 	icon_state = "engineering"
 	build_path = /obj/machinery/computer/turbine_computer
 
+/obj/item/circuitboard/computer/control_rods
+	name = "rbmk reactor control rod console (Computer Board)"
+	icon_state = "engineering"
+	build_path = /obj/machinery/computer/reactor/control_rods
 
 //Generic
 
@@ -202,6 +206,14 @@
 	name = "advanced camera console (Computer Board)"
 	icon_state = "generic"
 	build_path = /obj/machinery/computer/camera_advanced/syndie
+
+/obj/item/circuitboard/computer/advanced_camera/cyan
+	name = "advanced camera console: cyan (Computer Board)"
+	build_path = /obj/machinery/computer/camera_advanced/bounty_hunter
+
+/obj/item/circuitboard/computer/advanced_camera/darkblue
+	name = "advanced camera console: darkblue (Computer Board)"
+	build_path = /obj/machinery/computer/camera_advanced/wizard
 
 /obj/item/circuitboard/computer/arcade/amputation
 	name = "Mediborg's Amputation Adventure (Computer Board)"
@@ -295,10 +307,10 @@
 	icon_state = "medical"
 	build_path = /obj/machinery/computer/crew
 
-/obj/item/circuitboard/computer/med_data
+/obj/item/circuitboard/computer/records/medical
 	name = "medical records console (Computer Board)"
 	icon_state = "medical"
-	build_path = /obj/machinery/computer/med_data
+	build_path = /obj/machinery/computer/records/medical
 
 /obj/item/circuitboard/computer/operating
 	name = "operating computer (Computer Board)"
@@ -409,10 +421,10 @@
 	icon_state = "security"
 	build_path = /obj/machinery/computer/prisoner
 
-/obj/item/circuitboard/computer/secure_data
+/obj/item/circuitboard/computer/records/security
 	name = "security records console (Computer Board)"
 	icon_state = "security"
-	build_path = /obj/machinery/computer/secure_data
+	build_path = /obj/machinery/computer/records/security
 
 /obj/item/circuitboard/computer/security
 	name = "security camera console (Computer Board)"
@@ -457,17 +469,20 @@
 	contraband = TRUE
 	to_chat(user, "<span class='notice'>You adjust [src]'s routing and receiver spectrum, unlocking special supplies and contraband.</span>")
 
+/obj/item/circuitboard/computer/cargo/configure_machine(obj/machinery/computer/cargo/machine)
+	if(!istype(machine))
+		CRASH("Cargo board attempted to configure incorrect machine type: [machine] ([machine?.type])")
+
+	machine.contraband = contraband
+	if (obj_flags & EMAGGED)
+		machine.obj_flags |= EMAGGED
+	else
+		machine.obj_flags &= ~EMAGGED
+
 /obj/item/circuitboard/computer/cargo/express
 	name = "express supply console (Computer Board)"
 	icon_state = "supply"
 	build_path = /obj/machinery/computer/cargo/express
-
-/obj/item/circuitboard/computer/cargo/express/multitool_act(mob/living/user)
-	if (!(obj_flags & EMAGGED))
-		to_chat(user, "<span class='notice'>Routing protocols are already set to: \"factory defaults\".</span>")
-	else
-		to_chat(user, "<span class='notice'>You reset the routing protocols to: \"factory defaults\".</span>")
-		obj_flags &= ~EMAGGED
 
 /obj/item/circuitboard/computer/cargo/express/on_emag(mob/user)
 	..()

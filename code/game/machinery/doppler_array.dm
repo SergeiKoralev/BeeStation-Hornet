@@ -20,15 +20,16 @@
 
 /obj/machinery/doppler_array/Initialize(mapload)
 	. = ..()
-	RegisterSignal(SSdcs, COMSIG_GLOB_EXPLOSION, .proc/sense_explosion)
+	RegisterSignal(SSdcs, COMSIG_GLOB_EXPLOSION, PROC_REF(sense_explosion))
+	RegisterSignal(src, COMSIG_MOVABLE_SET_ANCHORED, PROC_REF(power_change))
 	printer_ready = world.time + PRINTER_TIMEOUT
 
 /obj/machinery/doppler_array/ComponentInitialize()
 	. = ..()
-	AddComponent(/datum/component/simple_rotation,ROTATION_ALTCLICK | ROTATION_CLOCKWISE,null,null,CALLBACK(src,.proc/rot_message))
+	AddComponent(/datum/component/simple_rotation, ROTATION_ALTCLICK | ROTATION_CLOCKWISE,null,null,CALLBACK(src,PROC_REF(rot_message)))
 
-/datum/data/tachyon_record
-	name = "Log Recording"
+/datum/tachyon_record
+	var/name = "Log Recording"
 	var/timestamp
 	var/coordinates = ""
 	var/displacement = 0
@@ -48,7 +49,7 @@
 /obj/machinery/doppler_array/ui_data(mob/user)
 	var/list/data = list()
 	data["records"] = list()
-	for(var/datum/data/tachyon_record/R in records)
+	for(var/datum/tachyon_record/R in records)
 		var/list/record_data = list(
 			name = R.name,
 			timestamp = R.timestamp,
@@ -71,19 +72,19 @@
 
 	switch(action)
 		if("delete_record")
-			var/datum/data/tachyon_record/record = locate(params["ref"]) in records
+			var/datum/tachyon_record/record = locate(params["ref"]) in records
 			if(!records || !(record in records))
 				return
 			records -= record
 			. = TRUE
 		if("print_record")
-			var/datum/data/tachyon_record/record  = locate(params["ref"]) in records
+			var/datum/tachyon_record/record  = locate(params["ref"]) in records
 			if(!records || !(record in records))
 				return
 			print(usr, record)
 			. = TRUE
 
-/obj/machinery/doppler_array/proc/print(mob/user, datum/data/tachyon_record/record)
+/obj/machinery/doppler_array/proc/print(mob/user, datum/tachyon_record/record)
 	if(!record)
 		return
 	if(printer_ready < world.time)
@@ -95,13 +96,15 @@
 /obj/item/paper/record_printout
 	name = "paper - Log Recording"
 
-/obj/item/paper/record_printout/Initialize(mapload, datum/data/tachyon_record/record)
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/paper/record_printout)
+
+/obj/item/paper/record_printout/Initialize(mapload, datum/tachyon_record/record)
 	. = ..()
 
 	if(record)
 		name = "paper - [record.name]"
 
-		info += {"<h2>[record.name]</h2>
+		default_raw_text += {"<h2>[record.name]</h2>
 		<ul><li>Timestamp: [record.timestamp]</li>
 		<li>Coordinates: [record.coordinates]</li>
 		<li>Displacement: [record.displacement] seconds</li>
@@ -110,7 +113,7 @@
 		<li>Shockwave Radius: [record.factual_radius["shockwave_radius"]]</li></ul>"}
 
 		if(length(record.theory_radius))
-			info += {"<ul><li>Theoretical Epicenter Radius: [record.theory_radius["epicenter_radius"]]</li>
+			default_raw_text += {"<ul><li>Theoretical Epicenter Radius: [record.theory_radius["epicenter_radius"]]</li>
 			<li>Theoretical Outer Radius: [record.theory_radius["outer_radius"]]</li>
 			<li>Theoretical Shockwave Radius: [record.theory_radius["shockwave_radius"]]</li></ul>"}
 
@@ -119,12 +122,10 @@
 /obj/machinery/doppler_array/attackby(obj/item/I, mob/user, params)
 	if(I.tool_behaviour == TOOL_WRENCH)
 		if(!anchored && !isinspace())
-			anchored = TRUE
-			power_change()
+			set_anchored(TRUE)
 			to_chat(user, "<span class='notice'>You fasten [src].</span>")
 		else if(anchored)
-			anchored = FALSE
-			power_change()
+			set_anchored(FALSE)
 			to_chat(user, "<span class='notice'>You unfasten [src].</span>")
 		I.play_tool_sound(src)
 		return
@@ -135,7 +136,7 @@
 	playsound(src, 'sound/items/screwdriver2.ogg', 50, 1)
 
 /obj/machinery/doppler_array/proc/sense_explosion(datum/source,turf/epicenter,devastation_range,heavy_impact_range,light_impact_range,
-												  took,orig_dev_range,orig_heavy_range,orig_light_range)
+													took,orig_dev_range,orig_heavy_range,orig_light_range)
 	SIGNAL_HANDLER
 
 	if(machine_stat & NOPOWER)
@@ -156,7 +157,7 @@
 	if(!(direct & dir) && !integrated)
 		return FALSE
 
-	var/datum/data/tachyon_record/R = new /datum/data/tachyon_record()
+	var/datum/tachyon_record/R = new /datum/tachyon_record()
 	R.name = "Log Recording #[record_number]"
 	R.timestamp = station_time_timestamp()
 	R.coordinates = "[epicenter.x], [epicenter.y]"
@@ -166,8 +167,8 @@
 	R.factual_radius["shockwave_radius"] = light_impact_range
 
 	var/list/messages = list("Explosive disturbance detected.",
-							 "Epicenter at: grid ([epicenter.x], [epicenter.y]). Temporal displacement of tachyons: [took] seconds.",
-							 "Factual: Epicenter radius: [devastation_range]. Outer radius: [heavy_impact_range]. Shockwave radius: [light_impact_range].")
+							"Epicenter at: grid ([epicenter.x], [epicenter.y]). Temporal displacement of tachyons: [took] seconds.",
+							"Factual: Epicenter radius: [devastation_range]. Outer radius: [heavy_impact_range]. Shockwave radius: [light_impact_range].")
 
 	// If the bomb was capped, say its theoretical size.
 	if(devastation_range < orig_dev_range || heavy_impact_range < orig_heavy_range || light_impact_range < orig_light_range)
@@ -186,20 +187,22 @@
 
 	for(var/mob/living/carbon/human/H in oviewers(src))
 		if(H.client)
-			INVOKE_ASYNC(H.client, /client.proc/increase_score, /datum/award/score/bomb_score, H, orig_light_range)
+			INVOKE_ASYNC(H.client, TYPE_PROC_REF(/client, increase_score), /datum/award/score/bomb_score, H, orig_light_range)
 
 	return TRUE
 
-/obj/machinery/doppler_array/power_change()
+/obj/machinery/doppler_array/powered()
+	if(!anchored)
+		return FALSE
+	return ..()
+
+/obj/machinery/doppler_array/update_icon()
 	if(machine_stat & BROKEN)
 		icon_state = "[initial(icon_state)]-broken"
+	else if(powered())
+		icon_state = initial(icon_state)
 	else
-		if(powered() && anchored)
-			icon_state = initial(icon_state)
-			set_machine_stat(machine_stat & ~NOPOWER)
-		else
-			icon_state = "[initial(icon_state)]-off"
-			set_machine_stat(machine_stat | NOPOWER)
+		icon_state = "[initial(icon_state)]-off"
 
 //Portable version, built into EOD equipment. It simply provides an explosion's three damage levels.
 /obj/machinery/doppler_array/integrated

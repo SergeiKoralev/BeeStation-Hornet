@@ -17,19 +17,23 @@
 		return FALSE
 
 	emittersemicd = TRUE
-	addtimer(CALLBACK(src, .proc/emittercool), emittercd)
-	mobility_flags = MOBILITY_FLAGS_DEFAULT
+	addtimer(CALLBACK(src, PROC_REF(emittercool)), emittercd)
+	REMOVE_TRAIT(src, TRAIT_IMMOBILIZED, PAI_FOLDED)
+	REMOVE_TRAIT(src, TRAIT_HANDS_BLOCKED, PAI_FOLDED)
 	set_density(TRUE)
 	if(isliving(card.loc))
 		var/mob/living/L = card.loc
 		if(!L.temporarilyRemoveItemFromInventory(card))
 			to_chat(src, "<span class='warning'>Error: Unable to expand to mobile form. Chassis is restrained by some device or person.</span>")
 			return FALSE
+	if(istype(card.loc, /obj/structure) || istype(card.loc, /obj/machinery))
+		to_chat(src, "<span class='warning'>Error: Unable to expand to mobile form. Chassis is restrained by some device or person.</span>")
+		return FALSE
 	forceMove(get_turf(card))
 	card.forceMove(src)
 	if(client)
 		client.perspective = EYE_PERSPECTIVE
-		client.eye = src
+		client.set_eye(src)
 	set_light_on(FALSE)
 	icon_state = "[chassis]"
 	held_state = "[chassis]"
@@ -42,9 +46,9 @@
 /mob/living/silicon/pai/proc/fold_in(force = FALSE)
 	emittersemicd = TRUE
 	if(!force)
-		addtimer(CALLBACK(src, .proc/emittercool), emittercd)
+		addtimer(CALLBACK(src, PROC_REF(emittercool)), emittercd)
 	else
-		addtimer(CALLBACK(src, .proc/emittercool), emitteroverloadcd)
+		addtimer(CALLBACK(src, PROC_REF(emittercool)), emitteroverloadcd)
 	icon_state = "[chassis]"
 	if(!holoform)
 		. = fold_out(force)
@@ -56,11 +60,12 @@
 		MH.release()
 	if(client)
 		client.perspective = EYE_PERSPECTIVE
-		client.eye = card
+		client.set_eye(card)
 	var/turf/T = drop_location()
 	card.forceMove(T)
 	forceMove(card)
-	mobility_flags = NONE
+	ADD_TRAIT(src, TRAIT_IMMOBILIZED, PAI_FOLDED)
+	ADD_TRAIT(src, TRAIT_HANDS_BLOCKED, PAI_FOLDED)
 	set_density(FALSE)
 	set_light_on(FALSE)
 	holoform = FALSE
@@ -73,10 +78,10 @@
 	for(var/holochassis_option in possible_chassis)
 		var/image/item_image = image(icon = src.icon, icon_state = holochassis_option)
 		skins += list("[holochassis_option]" = item_image)
-	sortList(skins)
+	sort_list(skins)
 
 	var/atom/anchor = get_atom_on_turf(src)
-	var/choice = show_radial_menu(src, anchor, skins, custom_check = CALLBACK(src, .proc/check_menu, anchor), radius = 40, require_near = TRUE)
+	var/choice = show_radial_menu(src, anchor, skins, custom_check = CALLBACK(src, PROC_REF(check_menu), anchor), radius = 40, require_near = TRUE)
 	if(!choice)
 		return FALSE
 	chassis = choice

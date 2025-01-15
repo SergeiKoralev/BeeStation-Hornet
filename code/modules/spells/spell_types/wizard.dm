@@ -6,15 +6,15 @@
 	charge_max = 200
 	clothes_req = TRUE
 	invocation = "FORTI GY AMA"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = 7
 	cooldown_min = 60 //35 deciseconds reduction per rank
 	max_targets = 0
-	proj_type = /obj/item/projectile/magic/spell/magic_missile
+	proj_type = /obj/projectile/magic/spell/magic_missile
 	action_icon_state = "magicm"
 	sound = 'sound/magic/magic_missile.ogg'
 
-/obj/item/projectile/magic/spell/magic_missile
+/obj/projectile/magic/spell/magic_missile
 	name = "a magic missile"
 	icon_state = "magicm"
 	range = 20
@@ -28,7 +28,7 @@
 	trail_lifespan = 5
 	trail_icon_state = "magicmd"
 
-/obj/item/projectile/magic/spell/magic_missile/New(loc, spell_level)
+/obj/projectile/magic/spell/magic_missile/New(loc, spell_level)
 	. = ..()
 	paralyze += spell_level * 10
 
@@ -40,7 +40,7 @@
 	charge_max = 400
 	clothes_req = TRUE
 	invocation = "BIRUZ BENNAR"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = -1
 	include_user = TRUE
 
@@ -60,7 +60,7 @@
 	charge_max = 120
 	clothes_req = FALSE
 	invocation = "none"
-	invocation_type = "none"
+	invocation_type = INVOCATION_NONE
 	range = -1
 	include_user = TRUE
 	cooldown_min = 20 //25 deciseconds reduction per rank
@@ -78,7 +78,7 @@
 	charge_max = 360
 	clothes_req = FALSE
 	invocation = "none"
-	invocation_type = "none"
+	invocation_type = INVOCATION_NONE
 	range = -1
 	include_user = TRUE
 
@@ -93,7 +93,7 @@
 	charge_max = 400
 	clothes_req = TRUE
 	invocation = "NEC CANTIO"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = -1
 	include_user = TRUE
 	cooldown_min = 200 //50 deciseconds reduction per rank
@@ -110,7 +110,7 @@
 	charge_max = 20
 	clothes_req = TRUE
 	invocation = "none"
-	invocation_type = "none"
+	invocation_type = INVOCATION_NONE
 	range = -1
 	include_user = TRUE
 	cooldown_min = 5 //4 deciseconds reduction per rank
@@ -141,7 +141,7 @@
 	charge_max = 600
 	clothes_req = TRUE
 	invocation = "SCYAR NILA"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = -1
 	include_user = TRUE
 	cooldown_min = 200 //100 deciseconds reduction per rank
@@ -159,19 +159,21 @@
 	clothes_req = FALSE
 	say_destination = FALSE // Santa moves in mysterious ways
 
-/obj/effect/proc_holder/spell/aoe_turf/conjure/timestop
+/obj/effect/proc_holder/spell/aoe_turf/timestop
 	name = "Stop Time"
 	desc = "This spell stops time for everyone except for you, allowing you to move freely while your enemies and even projectiles are frozen."
 	charge_max = 500
 	clothes_req = TRUE
 	invocation = "TOKI WO TOMARE"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = 0
 	cooldown_min = 100
-	summon_amt = 1
 	action_icon_state = "time"
+	var/timestop_range = 2
+	var/timestop_duration = 100
 
-	summon_type = list(/obj/effect/timestop/wizard)
+/obj/effect/proc_holder/spell/aoe_turf/timestop/cast(list/targets, mob/user = usr)
+	new /obj/effect/timestop/magic(get_turf(user), timestop_range, timestop_duration, list(user))
 
 /obj/effect/proc_holder/spell/aoe_turf/conjure/carp
 	name = "Summon Carp"
@@ -181,7 +183,7 @@
 	charge_max = 1200
 	clothes_req = TRUE
 	invocation = "NOUK FHUNMM SACP RISSKA"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = 1
 
 	summon_type = list(/mob/living/simple_animal/hostile/carp)
@@ -196,7 +198,7 @@
 	charge_max = 600
 	clothes_req = FALSE
 	invocation = "none"
-	invocation_type = "none"
+	invocation_type = INVOCATION_NONE
 	range = 0
 
 	summon_type = list(/obj/structure/constructshell)
@@ -213,7 +215,7 @@
 	charge_max = 1200
 	clothes_req = FALSE
 	invocation = "IA IA"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	summon_amt = 10
 	range = 3
 
@@ -245,7 +247,7 @@
 	charge_max = 400
 	clothes_req = TRUE
 	invocation = "GITTAH WEIGH"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	range = 5
 	cooldown_min = 150
 	selection_type = "view"
@@ -293,7 +295,7 @@
 				var/mob/living/M = AM
 				M.Paralyze(stun_amt)
 				to_chat(M, "<span class='userdanger'>You're thrown back by [user]!</span>")
-			AM.safe_throw_at(throwtarget, ((CLAMP((maxthrow - (CLAMP(distfromcaster - 2, 0, distfromcaster))), 3, maxthrow))), 1,user, force = repulse_force)//So stuff gets tossed around at the same time.
+			AM.safe_throw_at(throwtarget, ((clamp((maxthrow - (clamp(distfromcaster - 2, 0, distfromcaster))), 3, maxthrow))), 1,user, force = repulse_force)//So stuff gets tossed around at the same time.
 
 /obj/effect/proc_holder/spell/aoe_turf/repulse/xeno //i fixed conflicts only to find out that this is in the WIZARD file instead of the xeno file?!
 	name = "Tail Sweep"
@@ -304,9 +306,9 @@
 	antimagic_allowed = TRUE
 	range = 2
 	cooldown_min = 150
-	invocation_type = "none"
+	invocation_type = INVOCATION_NONE
 	sparkle_path = /obj/effect/temp_visual/dir_setting/tailsweep
-	action_icon = 'icons/mob/actions/actions_xeno.dmi'
+	action_icon = 'icons/hud/actions/actions_xeno.dmi'
 	action_icon_state = "tailsweep"
 	action_background_icon_state = "bg_alien"
 	anti_magic_check = FALSE
@@ -324,7 +326,7 @@
 	charge_max = 60
 	clothes_req = FALSE
 	invocation = "FI'RAN DADISKO"
-	invocation_type = "shout"
+	invocation_type = INVOCATION_SHOUT
 	max_targets = 0
 	range = 6
 	include_user = TRUE
@@ -367,7 +369,7 @@
 		if(isliving(hit_atom))
 			var/mob/living/M = hit_atom
 			if(!M.anti_magic_check())
-				M.electrocute_act(80, src, illusion = 1)
+				M.electrocute_act(80, src, flags = SHOCK_ILLUSION)
 		qdel(src)
 
 /obj/item/spellpacket/lightningbolt/throw_at(atom/target, range, speed, mob/thrower, spin=TRUE, diagonals_first = FALSE, datum/callback/callback, force = INFINITY, quickstart = TRUE)

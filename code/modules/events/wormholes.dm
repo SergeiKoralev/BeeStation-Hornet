@@ -21,7 +21,7 @@ GLOBAL_LIST_EMPTY(all_wormholes) // So we can pick wormholes to teleport to
 	endWhen = rand(40, 80)
 
 /datum/round_event/wormholes/start()
-	for(var/i = 1, i <= number_of_wormholes, i++)
+	for(var/i in 1 to number_of_wormholes)
 		var/turf/T = get_random_station_turf()	//side effect - wormholes won't spawn in space
 		wormholes += new /obj/effect/portal/wormhole(T, null, 0, null, FALSE)
 
@@ -38,6 +38,8 @@ GLOBAL_LIST_EMPTY(all_wormholes) // So we can pick wormholes to teleport to
 /datum/round_event/wormholes/end()
 	QDEL_LIST(wormholes)
 	wormholes = null
+	var/turf/T = get_random_station_turf()
+	T.generate_fake_pierced_realities(FALSE, 6)
 
 /obj/effect/portal/wormhole
 	name = "wormhole"
@@ -46,6 +48,8 @@ GLOBAL_LIST_EMPTY(all_wormholes) // So we can pick wormholes to teleport to
 	icon_state = "anom"
 	mech_sized = TRUE
 
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/effect/portal/wormhole)
 
 /obj/effect/portal/wormhole/Initialize(mapload, _creator, _lifespan = 0, obj/effect/portal/_linked, automatic_link = FALSE, turf/hard_target_override, atmos_link_override)
 	. = ..()

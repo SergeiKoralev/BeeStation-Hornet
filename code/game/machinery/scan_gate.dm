@@ -13,8 +13,8 @@
 #define SCANGATE_FLY			"fly"
 #define SCANGATE_PLASMAMAN		"plasma"
 #define SCANGATE_MOTH			"moth"
-#define SCANGATE_JELLY			"jelly"
-#define SCANGATE_POD			"pod"
+#define SCANGATE_OOZE			"oozeling"
+#define SCANGATE_DIONA			"diona"
 #define SCANGATE_GOLEM			"golem"
 #define SCANGATE_ZOMBIE			"zombie"
 
@@ -43,7 +43,7 @@
 	. = ..()
 	set_scanline("passive")
 	var/static/list/loc_connections = list(
-		COMSIG_ATOM_ENTERED = .proc/on_entered,
+		COMSIG_ATOM_ENTERED = PROC_REF(on_entered),
 	)
 	AddElement(/datum/element/connect_loc, loc_connections)
 
@@ -57,7 +57,7 @@
 /obj/machinery/scanner_gate/proc/on_entered(datum/source, atom/movable/AM)
 	SIGNAL_HANDLER
 
-	INVOKE_ASYNC(src, .proc/auto_scan, AM)
+	INVOKE_ASYNC(src, PROC_REF(auto_scan), AM)
 
 /obj/machinery/scanner_gate/proc/auto_scan(atom/movable/AM)
 	if(!(machine_stat & (BROKEN|NOPOWER)) && isliving(AM))
@@ -68,7 +68,7 @@
 	deltimer(scanline_timer)
 	add_overlay(type)
 	if(duration)
-		scanline_timer = addtimer(CALLBACK(src, .proc/set_scanline, "passive"), duration, TIMER_STOPPABLE)
+		scanline_timer = addtimer(CALLBACK(src, PROC_REF(set_scanline), "passive"), duration, TIMER_STOPPABLE)
 
 /obj/machinery/scanner_gate/attackby(obj/item/W, mob/user, params)
 	var/obj/item/card/id/card = W.GetID()
@@ -109,8 +109,8 @@
 			if(ishuman(M))
 				var/mob/living/carbon/human/H = M
 				var/perpname = H.get_face_name(H.get_id_name())
-				var/datum/data/record/R = find_record("name", perpname, GLOB.data_core.security)
-				if(!R || (R.fields["criminal"] == "*Arrest*"))
+				var/datum/record/crew/target = find_record(perpname, GLOB.manifest.general)
+				if(!target || (target.wanted_status == WANTED_ARREST))
 					beep = TRUE
 		if(SCANGATE_MINDSHIELD)
 			if(M.has_mindshield_hud_icon())
@@ -143,10 +143,10 @@
 						scan_species = /datum/species/plasmaman
 					if(SCANGATE_MOTH)
 						scan_species = /datum/species/moth
-					if(SCANGATE_JELLY)
-						scan_species = /datum/species/jelly
-					if(SCANGATE_POD)
-						scan_species = /datum/species/pod
+					if(SCANGATE_OOZE)
+						scan_species = /datum/species/oozeling
+					if(SCANGATE_DIONA)
+						scan_species = /datum/species/diona
 					if(SCANGATE_GOLEM)
 						scan_species = /datum/species/golem
 					if(SCANGATE_ZOMBIE)
@@ -242,7 +242,7 @@
 			var/new_nutrition = params["new_nutrition"]
 			var/nutrition_list = list(
 				"Starving",
-  				"Obese"
+					"Obese"
 			)
 			if(new_nutrition && (new_nutrition in nutrition_list))
 				switch(new_nutrition)
@@ -267,7 +267,7 @@
 #undef SCANGATE_FLY
 #undef SCANGATE_PLASMAMAN
 #undef SCANGATE_MOTH
-#undef SCANGATE_JELLY
-#undef SCANGATE_POD
+#undef SCANGATE_OOZE
+#undef SCANGATE_DIONA
 #undef SCANGATE_GOLEM
 #undef SCANGATE_ZOMBIE

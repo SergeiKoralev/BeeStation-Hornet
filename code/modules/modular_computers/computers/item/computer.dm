@@ -6,15 +6,18 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 /obj/item/modular_computer
 	name = "modular microcomputer"
 	desc = "A small portable microcomputer."
-	light_system = MOVABLE_LIGHT
+	icon = 'icons/obj/computer.dmi'
+	icon_state = "laptop"
+	light_system = MOVABLE_LIGHT_DIRECTIONAL
 	light_range = 3
 	light_power = 0.6
 	light_color = "#FFFFFF"
 	light_on = FALSE
 
-
-	var/enabled = 0											// Whether the computer is turned on.
-	var/screen_on = 1										// Whether the computer is active/opened/it's screen is on.
+	// Whether the computer is turned on.
+	var/enabled = 0
+	// Whether the computer is active/opened/it's screen is on.
+	var/screen_on = 1
 	/// If it's bypassing the set icon state
 	var/bypass_state = FALSE
 	/// Whether or not the computer can be upgraded
@@ -25,10 +28,12 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	var/device_theme = THEME_NTOS
 	/// Whether this device is allowed to change themes or not.
 	var/theme_locked = FALSE
+	/// If the theme should not be initialized from theme prefs (for custom job themes)
+	var/ignore_theme_pref = FALSE
 	/// List of themes for this device to allow.
 	var/list/allowed_themes
 	/// Color used for the Thinktronic Classic theme.
-	var/classic_color = "#808000"
+	var/classic_color = COLOR_OLIVE
 	var/datum/computer_file/program/active_program = null	// A currently active program running on the computer.
 	var/hardware_flag = 0									// A flag that describes this device type
 	var/last_power_usage = 0
@@ -43,17 +48,15 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	// must have it's own DMI file. Icon states must be called exactly the same in all files, but may look differently
 	// If you create a program which is limited to Laptops and Consoles you don't have to add it's icon_state overlay for Tablets too, for example.
 
-	icon = 'icons/obj/computer.dmi'
-	icon_state = "laptop-open"
 	var/icon_state_unpowered = null							// Icon state when the computer is turned off.
 	var/icon_state_powered = null							// Icon state when the computer is turned on.
 	var/icon_state_menu = "menu"							// Icon state overlay when the computer is turned on, but no program is loaded that would override the screen.
 	var/max_hardware_size = 0								// Maximal hardware w_class. Tablets/PDAs have 1, laptops 2, consoles 4.
 	var/steel_sheet_cost = 5								// Amount of steel sheets refunded when disassembling an empty frame of this computer.
 
-	integrity_failure = 50
+	integrity_failure = 0.5
 	max_integrity = 100
-	armor = list("melee" = 0, "bullet" = 20, "laser" = 20, "energy" = 100, "bomb" = 0, "bio" = 100, "rad" = 100, "fire" = 0, "acid" = 0, "stamina" = 0)
+	armor_type = /datum/armor/item_modular_computer
 
 	/// List of "connection ports" in this computer and the components with which they are plugged
 	var/list/all_components = list()
@@ -62,12 +65,14 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	/// Number of total expansion bays this computer has available.
 	var/max_bays = 0
 
+	/// If we can imprint IDs on this device
+	var/can_save_id = FALSE
 	/// The currently imprinted ID.
 	var/saved_identification = null
 	/// The currently imprinted job.
 	var/saved_job = null
 	/// If the saved info should auto-update
-	var/saved_auto_imprint = TRUE
+	var/saved_auto_imprint = FALSE
 	/// The amount of honks. honk honk honk honk honk honkh onk honkhnoohnk
 	var/honk_amount = 0
 	/// Idle programs on background. They still receive process calls but can't be interacted with.
@@ -95,9 +100,16 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	/// If the device is capable of storing a pAI
 	var/can_store_pai = FALSE
 
+
+/datum/armor/item_modular_computer
+	bullet = 20
+	laser = 20
+	energy = 100
+	rad = 100
+
 /obj/item/modular_computer/Initialize(mapload)
-	. = ..()
 	allowed_themes = GLOB.ntos_device_themes_default
+	. = ..()
 	START_PROCESSING(SSobj, src)
 	if(!physical)
 		physical = src
@@ -116,9 +128,10 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		id.UpdateDisplay()
 
 /obj/item/modular_computer/proc/on_id_insert()
+	ui_update()
 	var/obj/item/computer_hardware/card_slot/cardholder = all_components[MC_CARD]
 	// We shouldn't auto-imprint if ID modification is open.
-	if(!saved_auto_imprint || !cardholder || istype(active_program, /datum/computer_file/program/card_mod))
+	if(!can_save_id || !saved_auto_imprint || !cardholder || istype(active_program, /datum/computer_file/program/card_mod))
 		return
 	if(cardholder.current_identification == saved_identification && cardholder.current_job == saved_job)
 		return
@@ -128,7 +141,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	saved_job = cardholder.current_job
 	update_id_display()
 	playsound(src, 'sound/machines/terminal_processing.ogg', 15, TRUE)
-	addtimer(CALLBACK(GLOBAL_PROC, .proc/playsound, src, 'sound/machines/terminal_success.ogg', 15, TRUE), 1.3 SECONDS)
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(playsound), src, 'sound/machines/terminal_success.ogg', 15, TRUE), 1.3 SECONDS)
 
 /obj/item/modular_computer/Destroy()
 	kill_program(forced = TRUE)
@@ -229,7 +242,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		return attack_self(M)
 	return ..()
 
-/obj/item/modular_computer/attack_ai(mob/user)
+/obj/item/modular_computer/attack_silicon(mob/user)
 	return attack_self(user)
 
 /obj/item/modular_computer/attack_ghost(mob/dead/observer/user)
@@ -260,19 +273,23 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 			newemag = TRUE
 	if(newemag)
 		to_chat(user, "<span class='notice'>You swipe \the [src]. A console window momentarily fills the screen, with white text rapidly scrolling past.</span>")
+		kill_program(forced = TRUE, update = FALSE)
+
 		var/datum/computer_file/program/emag_console/emag_console = new(src)
 		emag_console.computer = src
 		emag_console.program_state = PROGRAM_STATE_ACTIVE
-		emag_console.ui_interact(user)
+		active_program = emag_console
+		ui_interact(user)
+		update_icon()
 		return TRUE
 	to_chat(user, "<span class='notice'>You swipe \the [src]. A console window fills the screen, but it quickly closes itself after only a few lines are written to it.</span>")
 	return FALSE
 
 /obj/item/modular_computer/examine(mob/user)
 	. = ..()
-	if(obj_integrity <= integrity_failure)
+	if(atom_integrity <= integrity_failure * max_integrity)
 		. += "<span class='danger'>It is heavily damaged!</span>"
-	else if(obj_integrity < max_integrity)
+	else if(atom_integrity < max_integrity)
 		. += "<span class='warning'>It is damaged.</span>"
 
 	. += get_modular_computer_parts_examine(user)
@@ -292,17 +309,9 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	if(can_store_pai && stored_pai_card)
 		add_overlay(stored_pai_card.pai ? mutable_appearance(init_icon, "pai-overlay") : mutable_appearance(init_icon, "pai-off-overlay"))
 
-	if(obj_integrity <= integrity_failure)
+	if(atom_integrity <= integrity_failure * max_integrity)
 		add_overlay(mutable_appearance(init_icon, "bsod"))
 		add_overlay(mutable_appearance(init_icon, "broken"))
-
-
-// On-click handling. Turns on the computer if it's off and opens the GUI.
-/obj/item/modular_computer/interact(mob/user)
-	if(enabled)
-		ui_interact(user)
-	else
-		turn_on(user)
 
 /obj/item/modular_computer/proc/turn_on(mob/user, open_ui = TRUE)
 	if(enabled)
@@ -310,7 +319,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 			ui_interact(user)
 		return TRUE
 	var/issynth = issilicon(user) // Robots and AIs get different activation messages.
-	if(obj_integrity <= integrity_failure)
+	if(atom_integrity <= integrity_failure * max_integrity)
 		if(issynth)
 			to_chat(user, "<span class='warning'>You send an activation signal to \the [src], but it responds with an error code. It must be damaged.</span>")
 		else
@@ -345,7 +354,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		last_power_usage = 0
 		return 0
 
-	if(obj_integrity <= integrity_failure)
+	if(atom_integrity <= integrity_failure * max_integrity)
 		shutdown_computer()
 		return 0
 
@@ -455,32 +464,34 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		if(3)
 			data["PC_ntneticon"] = "sig_lan.gif"
 
-	if(length(idle_threads))
-		var/list/program_headers = list()
-		for(var/I in idle_threads)
-			var/datum/computer_file/program/P = I
-			if(!P.ui_header)
-				continue
-			program_headers.Add(list(list(
-				"icon" = P.ui_header
-			)))
+	var/list/program_headers = list()
+	for(var/datum/computer_file/program/P as anything in idle_threads)
+		if(!P?.ui_header)
+			continue
+		program_headers.Add(list(list(
+			"icon" = P.ui_header
+		)))
 
-		data["PC_programheaders"] = program_headers
+	data["PC_programheaders"] = program_headers
 
 	data["PC_stationtime"] = station_time_timestamp()
+	data["PC_stationdate"] = "[time2text(world.realtime, "DDD, Month DD")], [GLOB.year_integer+YEAR_OFFSET]"
 	data["PC_hasheader"] = 1
 	data["PC_showexitprogram"] = active_program ? 1 : 0 // Hides "Exit Program" button on mainscreen
 	return data
 
 // Relays kill program request to currently active program. Use this to quit current program.
-/obj/item/modular_computer/proc/kill_program(forced = FALSE)
+/obj/item/modular_computer/proc/kill_program(forced = FALSE, update = TRUE)
 	if(active_program)
+		if(active_program in idle_threads)
+			idle_threads.Remove(active_program)
 		active_program.kill_program(forced)
 		active_program = null
-	var/mob/user = usr
-	if(user && istype(user))
-		ui_interact(user) // Re-open the UI on this computer. It should show the main screen now.
-	update_icon()
+	if(update)
+		var/mob/user = usr
+		if(user && istype(user))
+			ui_interact(user) // Re-open the UI on this computer. It should show the main screen now.
+		update_icon()
 
 /obj/item/modular_computer/proc/open_program(mob/user, datum/computer_file/program/program, in_background = FALSE)
 	if(program.computer != src)
@@ -501,7 +512,6 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 			program.alert_pending = FALSE
 			idle_threads.Remove(program)
 			update_icon()
-			updateUsrDialog()
 			return TRUE
 	else if(program in idle_threads)
 		return TRUE
@@ -520,7 +530,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	if(!in_background)
 		active_program = program
 		program.alert_pending = FALSE
-		updateUsrDialog()
+		ui_interact(user)
 	else
 		program.program_state = PROGRAM_STATE_BACKGROUND
 		idle_threads.Add(program)
@@ -557,7 +567,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
   * Toggles the computer's flashlight, if it has one.
   *
   * Called from ui_act(), does as the name implies.
-  * It is seperated from ui_act() to be overwritten as needed.
+  * It is separated from ui_act() to be overwritten as needed.
 */
 /obj/item/modular_computer/proc/toggle_flashlight()
 	if(!has_light)
@@ -573,7 +583,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
   * Sets the computer's light color, if it has a light.
   *
   * Called from ui_act(), this proc takes a color string and applies it.
-  * It is seperated from ui_act() to be overwritten as needed.
+  * It is separated from ui_act() to be overwritten as needed.
   * Arguments:
   ** color is the string that holds the color value that we should use. Proc auto-fails if this is null.
 */
@@ -595,7 +605,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		var/obj/item/computer_hardware/H = all_components[h]
 		component_names.Add(H.name)
 
-	var/choice = input(user, "Which component do you want to uninstall?", "Computer maintenance", null) as null|anything in sortList(component_names)
+	var/choice = input(user, "Which component do you want to uninstall?", "Computer maintenance", null) as null|anything in sort_list(component_names)
 
 	if(!choice)
 		return
@@ -610,6 +620,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 
 	tool.play_tool_sound(user, volume=20)
 	uninstall_component(H, user, TRUE)
+	ui_update()
 	return
 
 /obj/item/modular_computer/attackby(obj/item/attacking_item, mob/user, params)
@@ -626,12 +637,14 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 				saved_image = pic.picture
 				messenger.ProcessPhoto()
 				to_chat(user, "<span class='notice'>You scan \the [pic] into \the [src]'s messenger.</span>")
+				ui_update()
 			return
 
 	// Insert items into the components
 	for(var/h in all_components)
 		var/obj/item/computer_hardware/H = all_components[h]
 		if(H.try_insert(attacking_item, user))
+			ui_update()
 			return
 
 	// Insert a pAI card
@@ -640,8 +653,8 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 			return
 		stored_pai_card = attacking_item
 		// If the pAI moves out of the PDA, remove the reference.
-		RegisterSignal(stored_pai_card, COMSIG_MOVABLE_MOVED, .proc/stored_pai_moved)
-		RegisterSignal(stored_pai_card, COMSIG_PARENT_QDELETING, .proc/remove_pai)
+		RegisterSignal(stored_pai_card, COMSIG_MOVABLE_MOVED, PROC_REF(stored_pai_moved))
+		RegisterSignal(stored_pai_card, COMSIG_PARENT_QDELETING, PROC_REF(remove_pai))
 		to_chat(user, "<span class='notice'>You slot \the [attacking_item] into [src].</span>")
 		playsound(src, 'sound/machines/terminal_insert_disc.ogg', 50)
 		update_icon()
@@ -651,6 +664,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 	if(istype(inserted_hardware) && upgradable)
 		if(install_component(inserted_hardware, user))
 			inserted_hardware.on_inserted(user)
+			ui_update()
 			return
 
 	if(attacking_item.tool_behaviour == TOOL_WRENCH)
@@ -665,7 +679,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 		return
 
 	if(attacking_item.tool_behaviour == TOOL_WELDER)
-		if(obj_integrity == max_integrity)
+		if(atom_integrity == max_integrity)
 			to_chat(user, "<span class='warning'>\The [src] does not require repairs.</span>")
 			return
 
@@ -674,7 +688,7 @@ GLOBAL_LIST_EMPTY(TabletMessengers) // a list of all active messengers, similar 
 
 		to_chat(user, "<span class='notice'>You begin repairing damage to \the [src]...</span>")
 		if(attacking_item.use_tool(src, user, 20, volume=50, amount=1))
-			obj_integrity = max_integrity
+			atom_integrity = max_integrity
 			to_chat(user, "<span class='notice'>You repair \the [src].</span>")
 			update_icon()
 		return

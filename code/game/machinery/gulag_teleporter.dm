@@ -40,10 +40,6 @@ The console is located at computer/gulag_teleporter.dm
 		linked_reclaimer.linked_teleporter = null
 	return ..()
 
-/obj/machinery/gulag_teleporter/power_change()
-	..()
-	update_icon()
-
 /obj/machinery/gulag_teleporter/interact(mob/user)
 	. = ..()
 	if(locked)
@@ -86,7 +82,7 @@ The console is located at computer/gulag_teleporter.dm
 		return
 
 
-/obj/machinery/gulag_teleporter/relaymove(mob/user)
+/obj/machinery/gulag_teleporter/relaymove(mob/living/user, direction)
 	if(user.stat != CONSCIOUS)
 		return
 	if(locked)
@@ -150,7 +146,7 @@ The console is located at computer/gulag_teleporter.dm
 	if(linked_reclaimer)
 		linked_reclaimer.ui_update()
 
-/obj/machinery/gulag_teleporter/proc/handle_prisoner(obj/item/id, datum/data/record/R)
+/obj/machinery/gulag_teleporter/proc/handle_prisoner(obj/item/id, datum/record/crew/R)
 	if(!ishuman(occupant))
 		return
 	strip_occupant()
@@ -162,7 +158,7 @@ The console is located at computer/gulag_teleporter.dm
 	if(id)
 		prisoner.equip_to_appropriate_slot(id)
 	if(R)
-		R.fields["criminal"] = "Incarcerated"
+		R.wanted_status = WANTED_PRISONER
 
 /obj/item/circuitboard/machine/gulag_teleporter
 	name = "labor camp teleporter (Machine Board)"

@@ -3,6 +3,7 @@
 	desc = "A cheap single use autoinjector that injects the user with DNA."
 	icon = 'icons/obj/syringe.dmi'
 	icon_state = "dnainjector"
+	base_icon_state = "dnainjector"
 	lefthand_file = 'icons/mob/inhands/equipment/medical_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/medical_righthand.dmi'
 	throw_speed = 3
@@ -25,6 +26,7 @@
 		var/log_msg = "[key_name(user)] injected [key_name(M)] with the [name]"
 		for(var/HM in remove_mutations)
 			M.dna.remove_mutation(HM)
+			log_msg += "(mutation removal: [english_list(remove_mutations)])"
 		for(var/HM in add_mutations)
 			if(HM == RACEMUT)
 				message_admins("[ADMIN_LOOKUPFLW(user)] injected [key_name_admin(M)] with the [name] <span class='danger'>(MONKEY)</span>")
@@ -60,7 +62,7 @@
 	if(target != user)
 		target.visible_message("<span class='danger'>[user] is trying to inject [target] with [src]!</span>", \
 			"<span class='userdanger'>[user] is trying to inject you with [src]!</span>")
-		if(!do_mob(user, target) || used)
+		if(!do_after(user, 3 SECONDS, target) || used)
 			return
 		target.visible_message("<span class='danger'>[user] injects [target] with the syringe with [src]!", \
 						"<span class='userdanger'>[user] injects you with the syringe with [src]!</span>")
@@ -74,7 +76,7 @@
 		to_chat(user, "<span class='notice'>It appears that [target] does not have compatible DNA.</span>")
 
 	used = TRUE
-	icon_state = "dnainjector0"
+	icon_state = "[base_icon_state]0"
 	desc += " This one is spent, you better recycle it!"
 
 
@@ -152,12 +154,22 @@
 /obj/item/dnainjector/cluwnemut
 	name = "\improper DNA injector (Cluwneify)"
 	desc = "This is your last chance to turn back."
-	add_mutations = list(CLOWNMUT)
+	add_mutations = list(CLUWNEMUT)
 
 /obj/item/dnainjector/anticluwne
 	name = "\improper DNA injector (Anti-Cluwne)"
+	desc = "This is going to hurt."
+	remove_mutations = list(CLUWNEMUT)
+
+/obj/item/dnainjector/cursedcluwnemut
+	name = "\improper DNA injector (Cluwneify)"
+	desc = "This is your last chance to turn back."
+	add_mutations = list(CURSEDCLUWNEMUT)
+
+/obj/item/dnainjector/anticursedcluwne
+	name = "\improper DNA injector (Anti-Cluwne)"
 	desc = "This isn't going to work."
-	remove_mutations = list(CLOWNMUT)
+	remove_mutations = list(CURSEDCLUWNEMUT)
 
 /obj/item/dnainjector/antitour
 	name = "\improper DNA injector (Anti-Tour.)"
@@ -480,6 +492,15 @@
 	name = "\improper DNA injector (Anti-Medieval)"
 	remove_mutations = list(MEDIEVAL)
 
+/obj/item/dnainjector/spores
+	name = "\improper DNA injector (Agaricale Pores)"
+	add_mutations = list(SPORES)
+
+/obj/item/dnainjector/antispores
+	name = "\improper DNA injector (Anti-Agaricale Pores)"
+	remove_mutations = list(SPORES)
+
+// note: this is not functional. mutation is not added to temporary_mutation list - it becomes permanent.
 /obj/item/dnainjector/timed
 	var/duration = 600
 

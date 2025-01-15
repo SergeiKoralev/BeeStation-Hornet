@@ -11,10 +11,14 @@
 	var/mob/living/carbon/attached
 	var/mode = IV_INJECTING
 	var/obj/item/reagent_containers/beaker
-	var/static/list/drip_containers = typecacheof(list(/obj/item/reagent_containers/blood,
-									/obj/item/reagent_containers/chem_bag,
-									/obj/item/reagent_containers/food,
-									/obj/item/reagent_containers/glass))
+	var/static/list/drip_containers = typecacheof(list(
+		/obj/item/reagent_containers/blood,
+		/obj/item/reagent_containers/chem_bag,
+		/obj/item/reagent_containers/cup,
+		/obj/item/food, //Fuck it. You want to stab an IV into that 100u blood tomato? Be my guest.
+		/obj/item/reagent_containers/cup
+		)
+	)
 	var/can_convert = TRUE // If it can be made into an anesthetic machine or not
 
 /obj/machinery/iv_drip/Initialize(mapload)
@@ -26,7 +30,7 @@
 	QDEL_NULL(beaker)
 	return ..()
 
-/obj/machinery/iv_drip/obj_destruction()
+/obj/machinery/iv_drip/atom_destruction()
 	if(beaker)
 		beaker.forceMove(drop_location())
 		beaker.SplashReagents(drop_location())
@@ -94,7 +98,7 @@
 	if(Adjacent(target) && usr.Adjacent(target))
 		if(beaker)
 			usr.visible_message("<span class='warning'>[usr] attaches [src] to [target].</span>", "<span class='notice'>You attach [src] to [target].</span>")
-			log_combat(usr, target, "attached", src, "containing: [beaker.name] - ([beaker.reagents.log_list()])")
+			log_combat(usr, target, "attached", src, "containing: [beaker.name] - ([beaker.reagents.log_list()])", important = FALSE)
 			add_fingerprint(usr)
 			attached = target
 			START_PROCESSING(SSmachines, src)
@@ -104,7 +108,7 @@
 
 
 /obj/machinery/iv_drip/attackby(obj/item/W, mob/user, params)
-	if(is_type_in_typecache(W, drip_containers))
+	if(is_type_in_typecache(W, drip_containers) || IS_EDIBLE(W))
 		if(beaker)
 			to_chat(user, "<span class='warning'>There is already a reagent container loaded!</span>")
 			return
@@ -144,7 +148,7 @@
 					// speed up transfer on blood packs
 					transfer_amount *= 2
 				var/fraction = min(transfer_amount*delta_time/beaker.reagents.total_volume, 1) //the fraction that is transfered of the total volume
-				beaker.reagents.expose(attached, INJECT, fraction, FALSE) //make reagents reacts, but don't spam messages
+				beaker.reagents.reaction(attached, INJECT, fraction, FALSE) //make reagents reacts, but don't spam messages
 				beaker.reagents.trans_to(attached, transfer_amount)
 				update_icon()
 
@@ -239,7 +243,7 @@
 		return
 	if(user.is_holding_item_of_type(/obj/item/clothing/mask/breath) && can_convert)
 		visible_message("<span class='warning'>[user] attempts to attach the breath mask to [src].</span>", "<span class='notice'>You attempt to attach the breath mask to [src].</span>")
-		if(!do_after(user, 100, FALSE, src))
+		if(!do_after(user, 100, src, timed_action_flags = IGNORE_HELD_ITEM))
 			to_chat(user, "<span class='warning'>You fail to attach the breath mask to [src]!</span>")
 			return
 		var/item = user.is_holding_item_of_type(/obj/item/clothing/mask/breath)
@@ -259,15 +263,21 @@
 	can_convert = FALSE
 
 /obj/machinery/iv_drip/saline/Initialize(mapload)
-    . = ..()
-    beaker = new /obj/item/reagent_containers/glass/saline(src)
+	. = ..()
+	beaker = new /obj/item/reagent_containers/cup/saline(src)
+
+/obj/machinery/iv_drip/saline/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/update_icon_blocker)
 
 /obj/machinery/iv_drip/saline/update_icon()
-    return
+	return
 
 /obj/machinery/iv_drip/saline/eject_beaker()
-    return
+	return
+
 /obj/machinery/iv_drip/saline/toggle_mode()
 	return
+
 #undef IV_TAKING
 #undef IV_INJECTING

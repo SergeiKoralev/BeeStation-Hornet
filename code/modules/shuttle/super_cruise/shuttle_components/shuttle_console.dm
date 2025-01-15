@@ -34,6 +34,8 @@ GLOBAL_VAR_INIT(shuttle_docking_jammed, FALSE)
 	//Our orbital body.
 	var/datum/orbital_object/shuttle/shuttleObject
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/computer/shuttle_flight)
+
 /obj/machinery/computer/shuttle_flight/Initialize(mapload, obj/item/circuitboard/C)
 	. = ..()
 	valid_docks = params2list(possible_destinations)
@@ -271,7 +273,7 @@ GLOBAL_VAR_INIT(shuttle_docking_jammed, FALSE)
 			if(shuttleObject.autopilot)
 				to_chat(usr, "<span class='warning'>Shuttle is controlled by autopilot.</span>")
 				return
-			shuttleObject.thrust = CLAMP(params["thrust"], 0, 100)
+			shuttleObject.thrust = clamp(params["thrust"], 0, 100)
 		if("setAngle")
 			if(QDELETED(shuttleObject))
 				say("Shuttle not in flight.")
@@ -415,7 +417,7 @@ GLOBAL_VAR_INIT(shuttle_docking_jammed, FALSE)
 					//Hold the shuttle in the docking position until ready.
 					mobile_port.setTimer(INFINITY)
 					say("Waiting for hyperspace lane...")
-					INVOKE_ASYNC(src, .proc/unfreeze_shuttle, mobile_port, SSmapping.get_level(target_port.z))
+					INVOKE_ASYNC(src, PROC_REF(unfreeze_shuttle), mobile_port, SSmapping.get_level(target_port.z))
 				if(1)
 					to_chat(usr, "<span class='warning'>Invalid shuttle requested.</span>")
 				else
@@ -507,7 +509,7 @@ GLOBAL_VAR_INIT(shuttle_docking_jammed, FALSE)
 				//Hold the shuttle in the docking position until ready.
 				shuttle_dock.setTimer(INFINITY)
 				say("Waiting for hyperspace lane...")
-				INVOKE_ASYNC(src, .proc/unfreeze_shuttle, shuttle_dock, target_spacelevel)
+				INVOKE_ASYNC(src, PROC_REF(unfreeze_shuttle), shuttle_dock, target_spacelevel)
 				return TRUE
 			if(1)
 				say("Invalid shuttle requested")

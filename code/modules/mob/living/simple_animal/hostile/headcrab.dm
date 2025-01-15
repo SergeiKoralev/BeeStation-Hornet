@@ -10,7 +10,8 @@
 	health = 50
 	maxHealth = 50
 	melee_damage = 10
-	attacktext = "chomps"
+	attack_verb_continuous = "chomps"
+	attack_verb_simple = "chomp"
 	attack_sound = 'sound/weapons/bite.ogg'
 	faction = list("creature")
 	robust_searching = 1
@@ -47,7 +48,7 @@
 				return
 			Infect(target)
 			to_chat(src, "<span class='userdanger'>With our egg laid, our death approaches rapidly...</span>")
-			addtimer(CALLBACK(src, .proc/death), 100)
+			addtimer(CALLBACK(src, PROC_REF(death)), 100)
 
 /obj/item/organ/body_egg/changeling_egg
 	name = "changeling egg"
@@ -56,18 +57,15 @@
 	var/time
 
 /obj/item/organ/body_egg/changeling_egg/egg_process()
-	// Changeling eggs grow in dead people, but not people in stasis
-	var/mob/living/L = owner
-	if(L.IsInStasis())
-		return
+	// Changeling eggs grow in dead people
 	time++
 	if(time >= EGG_INCUBATION_TIME)
 		Pop()
-		Remove(owner)
+		Remove(owner.loc)
 		qdel(src)
 
 /obj/item/organ/body_egg/changeling_egg/proc/Pop()
-	var/mob/living/carbon/monkey/M = new(owner)
+	var/mob/living/carbon/monkey/M = new(owner.loc)
 
 	for(var/obj/item/organ/I in src)
 		I.Insert(M, 1)
@@ -84,6 +82,7 @@
 		C.purchasedpowers += hf
 		C.regain_powers()
 		M.key = origin.key
+	owner.investigate_log("has been gibbed by a changeling egg burst.", INVESTIGATE_DEATHS)
 	owner.gib()
 
 #undef EGG_INCUBATION_TIME

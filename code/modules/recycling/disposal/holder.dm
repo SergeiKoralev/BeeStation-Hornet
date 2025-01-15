@@ -16,6 +16,7 @@
 	var/destinationTag = NONE	// changes if contains a delivery container
 	var/tomail = FALSE			// contains wrapped package
 	var/hasmob = FALSE			// contains a mob
+	var/unsorted = TRUE			// have we been sorted yet?
 
 /obj/structure/disposalholder/Destroy()
 	QDEL_NULL(gas)
@@ -69,9 +70,9 @@
 	var/delay = world.tick_lag
 	var/datum/move_loop/our_loop = SSmove_manager.move_disposals(src, delay = delay, timeout = delay * count)
 	if(our_loop)
-		RegisterSignal(our_loop, COMSIG_MOVELOOP_PREPROCESS_CHECK, .proc/pre_move)
-		RegisterSignal(our_loop, COMSIG_MOVELOOP_POSTPROCESS, .proc/try_expel)
-		RegisterSignal(our_loop, COMSIG_PARENT_QDELETING, .proc/movement_stop)
+		RegisterSignal(our_loop, COMSIG_MOVELOOP_PREPROCESS_CHECK, PROC_REF(pre_move))
+		RegisterSignal(our_loop, COMSIG_MOVELOOP_POSTPROCESS, PROC_REF(try_expel))
+		RegisterSignal(our_loop, COMSIG_PARENT_QDELETING, PROC_REF(movement_stop))
 		current_pipe = loc
 
 /obj/structure/disposalholder/proc/pre_move(datum/move_loop/source)
@@ -114,9 +115,9 @@
 	if(!T)
 		return null
 
-	var/fdir = turn(dir, 180)	// flip the movement direction
+	var/fdir = dir_inverse_multiz(dir)	// flip the movement direction
 	for(var/obj/structure/disposalpipe/P in T)
-		if(fdir & P.dpdir)		// find pipe direction mask that matches flipped dir
+		if (P.can_enter_from_dir(fdir))
 			return P
 	// if no matching pipe, return null
 	return null
@@ -135,7 +136,7 @@
 
 
 // called when player tries to move while in a pipe
-/obj/structure/disposalholder/relaymove(mob/user)
+/obj/structure/disposalholder/relaymove(mob/living/user, direction)
 	if(user.incapacitated())
 		return
 	for(var/mob/M as() in hearers(5, get_turf(src)))

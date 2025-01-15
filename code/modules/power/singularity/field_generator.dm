@@ -3,13 +3,13 @@
 
 /*
 field_generator power level display
-   The icon used for the field_generator need to have 6 icon states
-   named 'Field_Gen +p[num]' where 'num' ranges from 1 to 6
+	The icon used for the field_generator need to have 6 icon states
+	named 'Field_Gen +p[num]' where 'num' ranges from 1 to 6
 
-   The power level is displayed using overlays. The current displayed power level is stored in 'powerlevel'.
-   The overlay in use and the powerlevel variable must be kept in sync.  A powerlevel equal to 0 means that
-   no power level overlay is currently in the overlays list.
-   -Aygar
+	The power level is displayed using overlays. The current displayed power level is stored in 'powerlevel'.
+	The overlay in use and the powerlevel variable must be kept in sync.  A powerlevel equal to 0 means that
+	no power level overlay is currently in the overlays list.
+	-Aygar
 */
 
 #define field_generator_max_power 250
@@ -33,7 +33,7 @@ field_generator power level display
 	use_power = NO_POWER_USE
 	max_integrity = 500
 	//100% immune to lasers and energy projectiles since it absorbs their energy.
-	armor = list("melee" = 25, "bullet" = 10, "laser" = 100, "energy" = 100, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 50, "acid" = 70, "stamina" = 0)
+	armor_type = /datum/armor/field_generator
 	var/power_level = 0
 	var/active = FG_OFFLINE
 	var/power = 20  // Current amount of power
@@ -44,21 +44,30 @@ field_generator power level display
 	var/clean_up = 0
 	COOLDOWN_STATIC_DECLARE(loose_message_cooldown)
 
+
+/datum/armor/field_generator
+	melee = 25
+	bullet = 10
+	laser = 100
+	energy = 100
+	fire = 50
+	acid = 70
+
 /obj/machinery/field/generator/Initialize(mapload)
 	. = ..()
 	fields = list()
 	connected_gens = list()
-	RegisterSignal(src, COMSIG_ATOM_SINGULARITY_TRY_MOVE, .proc/block_singularity_if_active)
+	RegisterSignal(src, COMSIG_ATOM_SINGULARITY_TRY_MOVE, PROC_REF(block_singularity_if_active))
 
 /obj/machinery/field/generator/ComponentInitialize()
 	. = ..()
-	AddComponent(/datum/component/empprotection, EMP_PROTECT_SELF | EMP_PROTECT_WIRES)
+	AddElement(/datum/element/empprotection, EMP_PROTECT_SELF | EMP_PROTECT_WIRES)
 
 /obj/machinery/field/generator/update_icon()
 	cut_overlays()
 	if(warming_up)
 		add_overlay("+a[warming_up]")
-	if(fields.len)
+	if(LAZYLEN(fields))
 		add_overlay("+on")
 	if(power_level)
 		add_overlay("+p[power_level]")
@@ -157,8 +166,8 @@ field_generator power level display
 	else
 		..()
 
-/obj/machinery/field/generator/bullet_act(obj/item/projectile/Proj)
-	if(Proj.flag != "bullet")
+/obj/machinery/field/generator/bullet_act(obj/projectile/Proj)
+	if(Proj.armor_flag != BULLET)
 		power = min(power + Proj.damage, field_generator_max_power)
 		check_power_level()
 	. = ..()
@@ -169,10 +178,10 @@ field_generator power level display
 	return ..()
 
 /*
-   The power level is displayed using overlays. The current displayed power level is stored in 'powerlevel'.
-   The overlay in use and the powerlevel variable must be kept in sync.  A powerlevel equal to 0 means that
-   no power level overlay is currently in the overlays list.
-   */
+	The power level is displayed using overlays. The current displayed power level is stored in 'powerlevel'.
+	The overlay in use and the powerlevel variable must be kept in sync.  A powerlevel equal to 0 means that
+	no power level overlay is currently in the overlays list.
+*/
 
 /obj/machinery/field/generator/proc/check_power_level()
 	var/new_level = round(6 * power / field_generator_max_power)
@@ -253,10 +262,10 @@ field_generator power level display
 	move_resist = INFINITY
 	CanAtmosPass = ATMOS_PASS_NO
 	air_update_turf(TRUE)
-	addtimer(CALLBACK(src, .proc/setup_field, 1), 1)
-	addtimer(CALLBACK(src, .proc/setup_field, 2), 2)
-	addtimer(CALLBACK(src, .proc/setup_field, 4), 3)
-	addtimer(CALLBACK(src, .proc/setup_field, 8), 4)
+	addtimer(CALLBACK(src, PROC_REF(setup_field), 1), 1)
+	addtimer(CALLBACK(src, PROC_REF(setup_field), 2), 2)
+	addtimer(CALLBACK(src, PROC_REF(setup_field), 4), 3)
+	addtimer(CALLBACK(src, PROC_REF(setup_field), 8), 4)
 	addtimer(VARSET_CALLBACK(src, active, FG_ONLINE), 5)
 
 

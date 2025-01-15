@@ -9,7 +9,8 @@
 	mob_biotypes = list()
 	melee_damage = 5
 	a_intent = INTENT_HARM
-	attacktext = "gores"
+	attack_verb_continuous = "gores"
+	attack_verb_simple = "gore"
 	maxHealth = 100
 	health = 100
 	speed = 0
@@ -37,8 +38,8 @@
 	multiply_chance = replicate
 	faction -= "neutral"
 	transform = initial(transform)
-	pixel_y = initial(pixel_y)
-	pixel_x = initial(pixel_x)
+	pixel_y = base_pixel_y
+	pixel_x = base_pixel_x
 
 /mob/living/simple_animal/hostile/illusion/examine(mob/user)
 	if(parent_mob)

@@ -44,13 +44,13 @@
 	return
 
 /obj/item/antag_spawner/contract/Topic(href, href_list)
-	..()
-	var/mob/living/carbon/human/H = usr
+	. = ..()
 
-	if(H.stat || H.restrained())
+	if(usr.stat != CONSCIOUS || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
 		return
-	if(!ishuman(H))
-		return 1
+	if(!ishuman(usr))
+		return TRUE
+	var/mob/living/carbon/human/H = usr
 
 	if(loc == H || (in_range(src, H) && isturf(loc)))
 		H.set_machine(src)
@@ -58,7 +58,7 @@
 			if(used)
 				to_chat(H, "You already used this contract!")
 				return
-			var/list/candidates = pollCandidatesForMob("Do you want to play as a wizard's [href_list["school"]] apprentice?", ROLE_WIZARD, null, ROLE_WIZARD, 150, src)
+			var/list/candidates = poll_ghost_candidates("Do you want to play as a wizard's [href_list["school"]] apprentice?", ROLE_WIZARD, /datum/role_preference/midround_ghost/wizard, 15 SECONDS, ignore_category = POLL_IGNORE_WIZARD_HELPER)
 			if(LAZYLEN(candidates))
 				if(QDELETED(src))
 					return
@@ -74,7 +74,7 @@
 /obj/item/antag_spawner/contract/spawn_antag(client/C, turf/T, kind ,datum/mind/user)
 	new /obj/effect/particle_effect/smoke(T)
 	var/mob/living/carbon/human/M = new/mob/living/carbon/human(T)
-	C.prefs.active_character.copy_to(M)
+	C.prefs.apply_prefs_to(M)
 	M.key = C.key
 	var/datum/mind/app_mind = M.mind
 
@@ -120,7 +120,7 @@
 		return
 
 	to_chat(user, "<span class='notice'>You activate [src] and wait for confirmation.</span>")
-	var/list/nuke_candidates = pollGhostCandidates("Do you want to play as a syndicate [borg_to_spawn ? "[lowertext(borg_to_spawn)] cyborg":"operative"]?", ROLE_OPERATIVE, null, ROLE_OPERATIVE, 150, POLL_IGNORE_SYNDICATE)
+	var/list/nuke_candidates = poll_ghost_candidates("Do you want to play as a syndicate [borg_to_spawn ? "[LOWER_TEXT(borg_to_spawn)] cyborg":"operative"]?", ROLE_OPERATIVE, /datum/role_preference/midround_ghost/nuclear_operative, 15 SECONDS)
 	if(LAZYLEN(nuke_candidates))
 		if(QDELETED(src) || !check_usability(user))
 			return
@@ -134,7 +134,7 @@
 
 /obj/item/antag_spawner/nuke_ops/spawn_antag(client/C, turf/T, kind, datum/mind/user)
 	var/mob/living/carbon/human/M = new/mob/living/carbon/human(T)
-	C.prefs.active_character.copy_to(M)
+	C.prefs.apply_prefs_to(M)
 	M.key = C.key
 
 	var/datum/antagonist/nukeop/new_op = new()
@@ -153,7 +153,7 @@
 
 /obj/item/antag_spawner/nuke_ops/clown/spawn_antag(client/C, turf/T, kind, datum/mind/user)
 	var/mob/living/carbon/human/M = new/mob/living/carbon/human(T)
-	C.prefs.active_character.copy_to(M)
+	C.prefs.apply_prefs_to(M)
 	M.key = C.key
 
 	var/datum/antagonist/nukeop/clownop/new_op = new /datum/antagonist/nukeop/clownop()
@@ -240,7 +240,7 @@
 		return
 	if(used)
 		return
-	var/list/candidates = pollCandidatesForMob("Do you want to play as a [initial(demon_type.name)]?", ROLE_ALIEN, null, ROLE_ALIEN, 50, src)
+	var/list/candidates = poll_ghost_candidates("Do you want to play as a [initial(demon_type.name)]?", ROLE_SLAUGHTER_DEMON, null, 10 SECONDS, ignore_category = FALSE)
 	if(LAZYLEN(candidates))
 		if(used || QDELETED(src))
 			return
@@ -277,53 +277,3 @@
 	veil_msg = "<span class='warning'>You sense an adorable presence lurking just beyond the veil...</span>"
 	demon_type = /mob/living/simple_animal/slaughter/laughter
 	antag_type = /datum/antagonist/slaughter/laughter
-
-///////////GANGSTER REINFORCEMENT SPAWNER
-
-/obj/item/antag_spawner/gangster
-	name = "crook spawner"
-	desc = "Have headquarters deliver you a crook that just dropped out of high-school and is ready for the front-line. He comes dressed with your gang's outfit and a spray can in hand."
-	icon = 'icons/obj/device.dmi'
-	icon_state = "locator"
-
-
-/obj/item/antag_spawner/gangster/attack_self(mob/user)
-	if(!(check_usability(user)))
-		return
-
-	to_chat(user, "<span class='notice'>You activate [src] and wait for confirmation.</span>")
-	var/list/candidates = pollGhostCandidates("Do you want to play as a gangster reinforcements?", ROLE_GANG, null, ROLE_GANG, 150)
-	if(LAZYLEN(candidates))
-		if(QDELETED(src) || !check_usability(user))
-			return
-		used = TRUE
-		var/mob/dead/observer/G = pick(candidates)
-		spawn_antag(G.client, get_turf(src), user.mind)
-		qdel(src)
-	else
-		to_chat(user, "<span class='warning'>No response from headquarters. Please wait and try again later.</span>")
-
-/obj/item/antag_spawner/gangster/proc/check_usability(mob/user)
-	if(used)
-		to_chat(user, "<span class='warning'>[src] is out of power!</span>")
-		return FALSE
-	if(!user.mind.has_antag_datum(/datum/antagonist/gang,TRUE))
-		to_chat(user, "<span class='danger'>AUTHENTICATION FAILURE. ACCESS DENIED.</span>")
-		return FALSE
-	return TRUE
-
-/obj/item/antag_spawner/gangster/spawn_antag(client/C, turf/T, datum/mind/user)
-	var/mob/living/carbon/human/M = new/mob/living/carbon/human(T)
-	if (C)
-		C.prefs.active_character.copy_to(M)
-		M.key = C.key
-
-	var/datum/antagonist/gang/alignment = user.has_antag_datum(/datum/antagonist/gang,TRUE)
-	if(alignment)
-		M.mind.add_antag_datum(/datum/antagonist/gang, alignment)
-		M.equip_to_slot_or_del(new alignment.gang.outfit(M),ITEM_SLOT_ICLOTHING)
-		M.equip_to_slot_or_del(new alignment.gang.suit(M),ITEM_SLOT_OCLOTHING)
-		M.equip_to_slot_or_del(new alignment.gang.hat(M),ITEM_SLOT_HEAD)
-
-	M.mind.special_role = "Gangster"
-	M.equipOutfit(/datum/outfit/crook)

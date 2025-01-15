@@ -17,7 +17,7 @@
 		return
 	invocation(thearea,user)
 	if(charge_type == "recharge" && recharge)
-		INVOKE_ASYNC(src, .proc/start_recharge)
+		INVOKE_ASYNC(src, PROC_REF(start_recharge))
 	cast(targets,thearea,user)
 	after_cast(targets)
 
@@ -60,7 +60,7 @@
 		var/success = FALSE
 		while(tempL.len)
 			attempt = pick(tempL)
-			do_teleport(target, attempt, channel = TELEPORT_CHANNEL_MAGIC)
+			do_teleport(target, attempt, channel = TELEPORT_CHANNEL_MAGIC, teleport_mode = TELEPORT_ALLOW_WIZARD)
 			if(get_turf(target) == attempt)
 				success = TRUE
 				break
@@ -68,7 +68,7 @@
 				tempL.Remove(attempt)
 
 		if(!success)
-			do_teleport(target, L, channel = TELEPORT_CHANNEL_MAGIC)
+			do_teleport(target, L, channel = TELEPORT_CHANNEL_MAGIC, teleport_mode = TELEPORT_ALLOW_WIZARD)
 			playsound(get_turf(user), sound2, 50,1)
 
 /obj/effect/proc_holder/spell/targeted/area_teleport/invocation(area/chosenarea = null,mob/living/user = usr)

@@ -36,11 +36,13 @@
 	stop_automated_movement_when_pulled = TRUE
 	wander = FALSE
 	wanted_objects = list(/obj/item/stack/ore/diamond, /obj/item/stack/ore/gold, /obj/item/stack/ore/silver,
-						  /obj/item/stack/ore/plasma, /obj/item/stack/ore/uranium, /obj/item/stack/ore/iron,
-						  /obj/item/stack/ore/bananium, /obj/item/stack/ore/titanium)
+							/obj/item/stack/ore/plasma, /obj/item/stack/ore/uranium, /obj/item/stack/ore/iron,
+							/obj/item/stack/ore/bananium, /obj/item/stack/ore/titanium)
 	// Response verbs
-	response_help = "pets"
-	attacktext = "drills"
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
+	attack_verb_continuous = "drills"
+	attack_verb_simple = "drill"
 	attack_sound = 'sound/weapons/circsawhit.ogg'
 	speak_emote = list("states")
 	// Light handling
@@ -51,22 +53,25 @@
 	var/mode = MODE_MINING /// What mode the minebot is in
 	var/mining_enabled = FALSE /// Whether or not the minebot will mine new ores while in mining mode.
 	var/list/installed_upgrades /// A list of all the minebot's installed upgrades
-	var/obj/item/gun/energy/kinetic_accelerator/minebot/stored_pka /// The minebot's stored PKA
+	var/obj/item/gun/energy/recharge/kinetic_accelerator/minebot/stored_pka /// The minebot's stored PKA
 	var/obj/item/gun/energy/plasmacutter/stored_cutter /// The minebot's stored plasma cutter
 	var/obj/item/pickaxe/drill/stored_drill /// The minebot's stored drill
 	var/obj/item/t_scanner/adv_mining_scanner/stored_scanner /// The minebot's stored mining scanner
 
 /mob/living/simple_animal/hostile/mining_drone/Initialize(mapload)
 	. = ..()
+
+	AddElement(/datum/element/footstep, FOOTSTEP_OBJ_ROBOT, 1, -6, vary = TRUE)
+
 	// Setup equipment
 	stored_pka = new(src)
 	stored_drill = new(src)
 	stored_scanner = new /obj/item/t_scanner/adv_mining_scanner/lesser(src) // No full-power scanner right off the bat
 
 	// Keep track of our equipment
-	RegisterSignal(stored_pka, COMSIG_PARENT_QDELETING, .proc/on_pka_qdel)
-	RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, .proc/on_drill_qdel)
-	RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, .proc/on_scanner_qdel)
+	RegisterSignal(stored_pka, COMSIG_PARENT_QDELETING, PROC_REF(on_pka_qdel))
+	RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, PROC_REF(on_drill_qdel))
+	RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, PROC_REF(on_scanner_qdel))
 
 	// Setup actions
 	var/datum/action/innate/minedrone/toggle_light/toggle_light_action = new()
@@ -86,8 +91,9 @@
 
 	// Setup access
 	access_card = new /obj/item/card/id(src)
-	var/datum/job/shaft_miner/M = new
+	var/datum/job/M = SSjob.GetJob(JOB_NAME_SHAFTMINER)
 	access_card.access = M.get_access()
+
 
 /mob/living/simple_animal/hostile/mining_drone/Destroy()
 	for(var/datum/action/innate/minedrone/action in actions)
@@ -192,23 +198,23 @@
 	if(user.a_intent != INTENT_HELP)
 		return ..() // For smacking
 	if(istype(item, /obj/item/minebot_upgrade))
-		if(!do_after(user, 20, TRUE, src))
+		if(!do_after(user, 20, src))
 			return TRUE
 		var/obj/item/minebot_upgrade/upgrade = item
 		upgrade.upgrade_bot(src, user)
 		return TRUE
 	if(istype(item, /obj/item/t_scanner/adv_mining_scanner))
-		if(!do_after(user, 20, TRUE, src))
+		if(!do_after(user, 20, src))
 			return TRUE
 		stored_scanner.forceMove(get_turf(src))
 		UnregisterSignal(stored_scanner, COMSIG_PARENT_QDELETING)
 		item.forceMove(src)
 		stored_scanner = item
-		RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, .proc/on_scanner_qdel)
+		RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, PROC_REF(on_scanner_qdel))
 		to_chat(user, "<span class='info'>You install [item].</span>")
 		return TRUE
 	if(istype(item, /obj/item/borg/upgrade/modkit))
-		if(!do_after(user, 20, TRUE, src))
+		if(!do_after(user, 20, src))
 			return TRUE
 		item.melee_attack_chain(user, stored_pka, params) // This handles any install messages
 		return TRUE
@@ -219,7 +225,7 @@
 	if(istype(item, /obj/item/gun/energy/plasmacutter))
 		if(health != maxHealth)
 			return // For repairs
-		if(!do_after(user, 20, TRUE, src))
+		if(!do_after(user, 20, src))
 			return TRUE
 		if(stored_cutter)
 			stored_cutter.forceMove(get_turf(src))
@@ -227,19 +233,19 @@
 			UnregisterSignal(stored_cutter, COMSIG_PARENT_QDELETING)
 		item.forceMove(src)
 		stored_cutter = item
-		RegisterSignal(stored_cutter, COMSIG_PARENT_QDELETING, .proc/on_cutter_qdel)
+		RegisterSignal(stored_cutter, COMSIG_PARENT_QDELETING, PROC_REF(on_cutter_qdel))
 		stored_cutter.requires_wielding = FALSE // Prevents inaccuracy when firing for the minebot.
 		to_chat(user, "<span class='info'>You install [item].</span>")
 		return TRUE
 	if(istype(item, /obj/item/pickaxe/drill))
-		if(!do_after(user, 20, TRUE, src))
+		if(!do_after(user, 20, src))
 			return TRUE
 		if(stored_drill)
 			stored_drill.forceMove(get_turf(src))
 			UnregisterSignal(stored_drill, COMSIG_PARENT_QDELETING)
 		item.forceMove(src)
 		stored_drill = item
-		RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, .proc/on_drill_qdel)
+		RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, PROC_REF(on_drill_qdel))
 		to_chat(user, "<span class='info'>You install [item].</span>")
 		return TRUE
 	..()
@@ -316,16 +322,16 @@
 		upgrade.onAltClick(target)
 
 /// Minebot passthrough handling (for the PKA upgrade and crushers)
-/mob/living/simple_animal/hostile/mining_drone/CanAllowThrough(atom/movable/moving_atom)
+/mob/living/simple_animal/hostile/mining_drone/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
-	if(istype(moving_atom, /obj/item/projectile/kinetic))
-		var/obj/item/projectile/kinetic/kinetic_proj = moving_atom
+	if(istype(mover, /obj/projectile/kinetic))
+		var/obj/projectile/kinetic/kinetic_proj = mover
 		if(kinetic_proj.kinetic_gun)
 			for(var/A as anything in kinetic_proj.kinetic_gun.get_modkits())
 				var/obj/item/borg/upgrade/modkit/modkit = A
 				if(istype(modkit, /obj/item/borg/upgrade/modkit/minebot_passthrough))
 					return TRUE
-	if(istype(moving_atom, /obj/item/projectile/destabilizer))
+	else if(istype(mover, /obj/projectile/destabilizer))
 		return TRUE
 
 /**********************Minebot Attack Handling**********************/
@@ -491,7 +497,7 @@
 
 /datum/action/innate/minedrone
 	check_flags = AB_CHECK_CONSCIOUS
-	icon_icon = 'icons/mob/actions/actions_mecha.dmi'
+	icon_icon = 'icons/hud/actions/actions_mecha.dmi'
 	background_icon_state = "bg_default"
 
 /// Toggles a minebot's inbuilt meson scanners.
@@ -632,7 +638,7 @@
 /obj/item/minebot_upgrade/ore_pickup/upgrade_bot(mob/living/simple_animal/hostile/mining_drone/minebot, mob/user)
 	if(!..())
 		return
-	RegisterSignal(minebot, COMSIG_MOVABLE_MOVED, .proc/automatic_pickup)
+	RegisterSignal(minebot, COMSIG_MOVABLE_MOVED, PROC_REF(automatic_pickup))
 
 /obj/item/minebot_upgrade/ore_pickup/unequip()
 	UnregisterSignal(linked_bot, COMSIG_MOVABLE_MOVED)
@@ -650,7 +656,7 @@
 	desc = "Allows a sentient minebot to carry and administer a medipen."
 	var/obj/item/reagent_containers/hypospray/medipen/stored_medipen
 
-/obj/item/minebot_upgrade/medical/Initialize()
+/obj/item/minebot_upgrade/medical/Initialize(mapload)
 	. = ..()
 	stored_medipen = new /obj/item/reagent_containers/hypospray/medipen(src)
 

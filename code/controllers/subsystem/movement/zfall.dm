@@ -1,7 +1,7 @@
 /// Responsible for triggering mob zfalls when they are not already triggered by structure deconstruction or moving into openspace
 SUBSYSTEM_DEF(zfall)
 	name = "Zfall"
-	flags = SS_TICKER
+	flags = SS_TICKER | SS_NO_INIT
 	wait = 5
 	runlevels = RUNLEVEL_GAME|RUNLEVEL_POSTGAME
 	priority = FIRE_PRIORITY_ZFALL
@@ -11,7 +11,7 @@ SUBSYSTEM_DEF(zfall)
 /datum/controller/subsystem/zfall/proc/add_openspace_inhabitant(atom/movable/A)
 	if(!ismob(A) || (A in openspace_inhabitants))
 		return
-	RegisterSignal(A, COMSIG_PARENT_QDELETING, .proc/remove_openspace_inhabitant, A)
+	RegisterSignal(A, COMSIG_PARENT_QDELETING, PROC_REF(remove_openspace_inhabitant), A)
 	openspace_inhabitants |= A
 
 /datum/controller/subsystem/zfall/proc/remove_openspace_inhabitant(atom/movable/A)
@@ -26,13 +26,13 @@ SUBSYSTEM_DEF(zfall)
 	if(!isopenspace(T))
 		remove_openspace_inhabitant(A)
 		return
-	if(!A.zfalling)
+	if(!A.zfalling && A.loc == T)
 		T.try_start_zFall(A)
 
 /datum/controller/subsystem/zfall/fire()
 	if(enumerator == null)
 		var/datum/enumerator/E = get_list_enumerator(openspace_inhabitants.Copy())
-		enumerator = E.foreach(CALLBACK(src, .proc/check_z_fall))
+		enumerator = E.foreach(CALLBACK(src, PROC_REF(check_z_fall)))
 	//Run over the enumerators while we are allowed
 	var/enumerator_has_next = enumerator.has_next()
 	while (enumerator_has_next)

@@ -7,7 +7,7 @@
 	var/list/elements
 	var/floor_type = /turf/open/floor/vault
 	var/finished = FALSE
-	var/reward_type = /obj/item/reagent_containers/food/snacks/cookie
+	var/reward_type = /obj/item/food/cookie
 	var/element_type = /obj/structure/puzzle_element
 	var/auto_setup = TRUE
 	var/empty_tile_id
@@ -135,7 +135,7 @@
 	return 0
 
 /obj/effect/sliding_puzzle/proc/elements_in_order()
-	return sortTim(elements,cmp=/proc/cmp_xy_desc)
+	return sortTim(elements,cmp=GLOBAL_PROC_REF(cmp_xy_desc))
 
 /obj/effect/sliding_puzzle/proc/get_base_icon()
 	var/icon/I = new('icons/obj/puzzle.dmi')
@@ -284,6 +284,7 @@
 /obj/effect/sliding_puzzle/prison/Destroy()
 	if(prisoner)
 		to_chat(prisoner,"<span class='userdanger'>With the cube broken by force, you can feel your body falling apart.</span>")
+		prisoner.investigate_log("has died from their prison puzzle being destroyed.", INVESTIGATE_DEATHS)
 		prisoner.death()
 		qdel(prisoner)
 	. = ..()
@@ -295,9 +296,20 @@
 
 //Some armor so it's harder to kill someone by mistake.
 /obj/structure/puzzle_element/prison
-	armor = list("melee" = 50, "bullet" = 50, "laser" = 50, "energy" = 50, "bomb" = 50, "bio" = 50, "rad" = 50, "fire" = 50, "acid" = 50, "stamina" = 0)
+	armor_type = /datum/armor/puzzle_element_prison
 
-/obj/structure/puzzle_element/prison/relaymove(mob/user)
+
+/datum/armor/puzzle_element_prison
+	melee = 50
+	bullet = 50
+	laser = 50
+	energy = 50
+	bomb = 50
+	rad = 50
+	fire = 50
+	acid = 50
+
+/obj/structure/puzzle_element/prison/relaymove(mob/living/user, direction)
 	return
 
 /obj/item/prisoncube
@@ -312,7 +324,7 @@
 		return
 	var/mob/living/victim = target
 	var/mob/living/carbon/carbon_victim = victim
-	//Handcuffed or unconcious
+	//Handcuffed or unconscious
 	if(istype(carbon_victim) && carbon_victim.handcuffed || victim.stat != CONSCIOUS)
 		if(!puzzle_imprison(target))
 			to_chat(user,"<span class='warning'>[src] does nothing.</span>")
@@ -320,7 +332,7 @@
 		to_chat(user,"<span class='warning'>You trap [victim] in the prison cube!</span>")
 		qdel(src)
 	else
-		to_chat(user,"<span class='notice'>[src] only accepts restrained or unconcious prisoners.</span>")
+		to_chat(user,"<span class='notice'>[src] only accepts restrained or unconscious prisoners.</span>")
 
 /proc/puzzle_imprison(mob/living/prisoner)
 	var/turf/T = get_turf(prisoner)
@@ -352,3 +364,5 @@
 	var/obj/structure/puzzle_element/E = pick(cube.elements)
 	prisoner.forceMove(E)
 	return TRUE
+
+#undef COLLAPSE_DURATION

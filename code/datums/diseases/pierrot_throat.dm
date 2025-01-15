@@ -7,7 +7,7 @@
 	cure_chance = 75
 	agent = "H0NI<42 Virus"
 	viable_mobtypes = list(/mob/living/carbon/human)
-	permeability_mod = 0.75
+	spreading_modifier = 0.75
 	desc = "If left untreated the subject will probably drive others to insanity."
 	danger = DISEASE_MEDIUM
 
@@ -28,7 +28,7 @@
 				affected_mob.say( pick( list("HONK!", "Honk!", "Honk.", "Honk?", "Honk!!", "Honk?!", "Honk...") ) , forced = "pierrot's throat")
 
 /datum/disease/pierrot_throat/after_add()
-	RegisterSignal(affected_mob, COMSIG_MOB_SAY, .proc/handle_speech)
+	RegisterSignal(affected_mob, COMSIG_MOB_SAY, PROC_REF(handle_speech))
 
 
 /datum/disease/pierrot_throat/proc/handle_speech(datum/source, list/speech_args)

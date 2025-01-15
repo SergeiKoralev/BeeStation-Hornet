@@ -23,7 +23,7 @@
 	if(!isatom(target))
 		return ELEMENT_INCOMPATIBLE
 
-	RegisterSignal(target, COMSIG_MOUSEDROP_ONTO, .proc/mouse_drop_onto)
+	RegisterSignal(target, COMSIG_MOUSEDROP_ONTO, PROC_REF(mouse_drop_onto))
 
 	src.items = items
 	src.should_strip_proc_path = should_strip_proc_path
@@ -62,7 +62,7 @@
 		strip_menu = new(source, src)
 		LAZYSET(strip_menus, source, strip_menu)
 
-	INVOKE_ASYNC(strip_menu, /datum/.proc/ui_interact, user)
+	INVOKE_ASYNC(strip_menu, TYPE_PROC_REF(/datum, ui_interact), user)
 
 /datum/strippable_item_layout
 	/// The STRIPPABLE_ITEM_* key
@@ -163,6 +163,9 @@
 	if(isnull(item))
 		return FALSE
 
+	if(HAS_TRAIT(item, TRAIT_NO_STRIP))
+		return FALSE
+
 	source.visible_message(
 		"<span class='warning'>[user] tries to remove [source]'s [item.name].</span>",
 		"<span class='userdanger'>[user] tries to remove your [item.name].</span>",
@@ -242,7 +245,7 @@
 	if(!ismob(source))
 		return FALSE
 
-	if(!do_mob(user, source, get_equip_delay(equipping)))
+	if(!do_after(user, get_equip_delay(equipping), source))
 		return FALSE
 
 	if(!equipping.mob_can_equip(
@@ -306,8 +309,8 @@
 		return TRUE
 
 /// A utility function for `/datum/strippable_item`s to start unequipping an item from a mob.
-/proc/start_unequip_mob(obj/item/item, mob/source, mob/user, strip_delay)
-	if(!do_mob(user, source, strip_delay || item.strip_delay))
+/proc/start_unequip_mob(obj/item/item, mob/source, mob/user, strip_delay, hidden = FALSE)
+	if(!do_after(user, strip_delay || item.strip_delay, source, interaction_key = REF(item), hidden = hidden))
 		return FALSE
 
 	return TRUE
@@ -380,7 +383,7 @@
 			continue
 
 		var/obj/item/item = item_data.get_item(owner)
-		if(isnull(item))
+		if(isnull(item) || (HAS_TRAIT(item, TRAIT_NO_STRIP)))
 			items[strippable_key] = result
 			continue
 
@@ -391,6 +394,10 @@
 		*/
 		result["name"] = item.name
 		result["alternate"] = item_data.get_alternate_action(owner, user)
+
+		var/datum/strip_context/context = new()
+		result["extra_actions"] = context.extra_actions
+		item.add_strip_actions(context)
 
 		items[strippable_key] = result
 
@@ -527,6 +534,24 @@
 			strippable_item.alternate_action(owner, user)
 
 			LAZYREMOVEASSOC(interactions, user, key)
+		if ("extra_act")
+			var/slot_id = params["key"]
+			var/datum/strippable_item/strippable_item = strippable.items[slot_id]
+
+			if(isnull(strippable_item))
+				return
+
+			if(!strippable_item.should_show(owner, user))
+				return
+
+			if(strippable_item.get_obscuring(owner) == STRIPPABLE_OBSCURING_COMPLETELY)
+				return
+
+			var/obj/item/item = strippable_item.get_item(owner)
+			if(isnull(item))
+				return
+
+			item.perform_strip_actions(params["action"], user)
 
 /datum/strip_menu/ui_host(mob/user)
 	return owner
@@ -553,3 +578,30 @@
 		strippable_items[strippable_item.key] = strippable_item
 
 	return strippable_items
+
+/datum/strip_context
+	var/mob/living/actor
+	var/mob/living/wearer
+	var/list/extra_actions = list()
+
+/datum/strip_context/proc/add_item_action(action_name, action_key)
+	extra_actions += list(list(
+		"action_name" = action_name,
+		"action_key" = action_key,
+	))
+
+/datum/strip_context/proc/add_power_off_action(action_name, action_key)
+	extra_actions += list(list(
+		"action_name" = action_name,
+		"action_key" = action_key,
+		"action_icon" = "power-off",
+		"action_color" = "green"
+	))
+
+/datum/strip_context/proc/add_power_on_action(action_name, action_key)
+	extra_actions += list(list(
+		"action_name" = action_name,
+		"action_key" = action_key,
+		"action_icon" = "power-off",
+		"action_color" = "red"
+	))

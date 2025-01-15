@@ -8,8 +8,9 @@
 	desc = "The basic construction for Nanotrasen-Always-Watching-You cameras."
 	icon = 'icons/obj/machines/camera.dmi'
 	icon_state = "cameracase"
-	materials = list(/datum/material/iron=400, /datum/material/glass=250)
+	custom_materials = list(/datum/material/iron=400, /datum/material/glass=250)
 	result_path = /obj/structure/camera_assembly
+	wall_external = TRUE
 
 /obj/structure/camera_assembly
 	name = "camera assembly"
@@ -55,6 +56,8 @@
 			. += "<span class='info'>You can complete it with a <b>screwdriver</b>, or <b>unwire</b> it to start removal.</span>"
 		if(STATE_FINISHED)
 			. += "<span class='boldwarning'>You shouldn't be seeing this, tell a coder!</span>"
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/camera_assembly)
 
 /obj/structure/camera_assembly/Initialize(mapload, ndir, building)
 	. = ..()
@@ -102,7 +105,7 @@
 			if(W.tool_behaviour == TOOL_WELDER)
 				if(weld(W, user))
 					to_chat(user, "<span class='notice'>You weld [src] securely into place.</span>")
-					setAnchored(TRUE)
+					set_anchored(TRUE)
 					state = STATE_WELDED
 				return
 
@@ -122,7 +125,7 @@
 				if(weld(W, user))
 					to_chat(user, "<span class='notice'>You unweld [src] from its place.</span>")
 					state = STATE_WRENCHED
-					setAnchored(TRUE)
+					set_anchored(TRUE)
 				return
 
 		if(STATE_WIRED)	// Upgrades!
@@ -161,7 +164,7 @@
 		droppable_parts += proxy_module
 	if(!droppable_parts.len)
 		return
-	var/obj/item/choice = input(user, "Select a part to remove:", src) as null|obj in sortNames(droppable_parts)
+	var/obj/item/choice = input(user, "Select a part to remove:", src) as null|obj in sort_names(droppable_parts)
 	if(!choice || !user.canUseTopic(src, BE_CLOSE, FALSE, NO_TK))
 		return
 	to_chat(user, "<span class='notice'>You remove [choice] from [src].</span>")
@@ -187,7 +190,7 @@
 		return
 	for(var/i in tempnetwork)
 		tempnetwork -= i
-		tempnetwork += lowertext(i)
+		tempnetwork += LOWER_TEXT(i)
 	state = STATE_FINISHED
 	var/obj/machinery/camera/C = new(loc, src)
 	forceMove(C)

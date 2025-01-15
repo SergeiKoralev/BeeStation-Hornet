@@ -13,9 +13,13 @@ Slimecrossing Armor
 	body_parts_covered = NONE
 	w_class = WEIGHT_CLASS_SMALL
 	gas_transfer_coefficient = 0
-	permeability_coefficient = 0.5
+	armor_type = /datum/armor/mask_nobreath
 	flags_cover = MASKCOVERSMOUTH
 	resistance_flags = NONE
+
+
+/datum/armor/mask_nobreath
+	bio = 50
 
 /obj/item/clothing/mask/nobreath/equipped(mob/living/carbon/human/user, slot)
 	. = ..()
@@ -27,8 +31,11 @@ Slimecrossing Armor
 
 /obj/item/clothing/mask/nobreath/dropped(mob/living/carbon/human/user)
 	..()
-	REMOVE_TRAIT(user, TRAIT_NOBREATH, "breathmask_[REF(src)]")
-	user.remove_status_effect(/datum/status_effect/rebreathing)
+	if(user.wear_mask != src)
+		return
+	else
+		REMOVE_TRAIT(user, TRAIT_NOBREATH, "breathmask_[REF(src)]")
+		user.remove_status_effect(/datum/status_effect/rebreathing)
 
 /obj/item/clothing/glasses/prism_glasses
 	name = "prism glasses"
@@ -51,6 +58,8 @@ Slimecrossing Armor
 	anchored = TRUE
 	max_integrity = 10
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_prism)
+
 /obj/structure/light_prism/Initialize(mapload, var/newcolor)
 	. = ..()
 	color = newcolor
@@ -70,7 +79,7 @@ Slimecrossing Armor
 	if(!IsAvailable())
 		return
 	var/obj/item/clothing/glasses/prism_glasses/glasses = target
-	var/new_color = input(owner, "Choose the lens color:", "Color change",glasses.glasses_color) as color|null
+	var/new_color = tgui_color_picker(owner, "Choose the lens color:", "Color change",glasses.glasses_color)
 	if(!new_color)
 		return
 	glasses.glasses_color = new_color
@@ -98,8 +107,9 @@ Slimecrossing Armor
 	name = "heroine bud"
 	desc = "An extremely addictive flower, full of peace magic."
 	icon = 'icons/obj/slimecrossing.dmi'
+	worn_icon = 'icons/mob/clothing/head/costume.dmi'
 	icon_state = "peaceflower"
-	item_state = "peaceflower"
+	item_state = null
 	slot_flags = ITEM_SLOT_HEAD
 	clothing_flags = EFFECT_HAT | SNUG_FIT
 	body_parts_covered = NONE
@@ -117,7 +127,10 @@ Slimecrossing Armor
 
 /obj/item/clothing/head/peaceflower/dropped(mob/living/carbon/human/user)
 	..()
-	REMOVE_TRAIT(user, TRAIT_PACIFISM, "peaceflower_[REF(src)]")
+	if(user.head != src)
+		return
+	else
+		REMOVE_TRAIT(user, TRAIT_PACIFISM, "peaceflower_[REF(src)]")
 
 /obj/item/clothing/head/peaceflower/attack_hand(mob/user)
 	if(iscarbon(user))
@@ -138,14 +151,14 @@ Slimecrossing Armor
 
 /obj/item/clothing/suit/armor/heavy/adamantine/equipped(mob/user, slot)
 	. = ..()
-	user.add_movespeed_modifier(MOVESPEED_ID_SLOW_ARMOR, update=TRUE, priority=100, multiplicative_slowdown= 4)
+	user.add_movespeed_modifier(/datum/movespeed_modifier/admantine_armor)
 
 /obj/item/clothing/suit/armor/heavy/adamantine/dropped(mob/user)
 	..()
-	user.remove_movespeed_modifier(MOVESPEED_ID_SLOW_ARMOR, TRUE)
+	user.remove_movespeed_modifier(/datum/movespeed_modifier/admantine_armor)
 
 /obj/item/clothing/suit/armor/heavy/adamantine/IsReflect(def_zone)
-	if(def_zone in list(BODY_ZONE_CHEST, BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_R_LEG, BODY_ZONE_L_LEG) && prob(hit_reflect_chance))
+	if((def_zone in list(BODY_ZONE_CHEST, BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_R_LEG, BODY_ZONE_L_LEG)) && prob(hit_reflect_chance))
 		return TRUE
 	else
 		return FALSE

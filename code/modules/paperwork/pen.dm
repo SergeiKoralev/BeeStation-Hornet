@@ -17,21 +17,23 @@
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "pen"
 	item_state = "pen"
+	worn_icon_state = "pen"
 	slot_flags = ITEM_SLOT_BELT | ITEM_SLOT_EARS
 	throwforce = 0
 	w_class = WEIGHT_CLASS_TINY
+	item_flags = ISWEAPON
 	throw_speed = 3
 	throw_range = 7
-	materials = list(/datum/material/iron=10)
+	custom_materials = list(/datum/material/iron=10)
 	pressure_resistance = 2
 	grind_results = list(/datum/reagent/iron = 2, /datum/reagent/iodine = 1)
 	var/colour = "black"	//what colour the ink is!
 	var/degrees = 0
 	var/font = PEN_FONT
 
-/obj/item/pen/suicide_act(mob/user)
+/obj/item/pen/suicide_act(mob/living/user)
 	user.visible_message("<span class='suicide'>[user] is scribbling numbers all over [user.p_them()]self with [src]! It looks like [user.p_theyre()] trying to commit sudoku...</span>")
-	return(BRUTELOSS)
+	return BRUTELOSS
 
 /obj/item/pen/blue
 	desc = "It's a normal blue ink pen."
@@ -83,12 +85,7 @@
 	font = CHARCOAL_FONT
 	custom_materials = null
 
-/datum/crafting_recipe/charcoal_stylus
-	name = "Charcoal Stylus"
-	result = /obj/item/pen/charcoal
-	reqs = list(/obj/item/stack/sheet/wood = 1, /datum/reagent/ash = 30)
-	time = 30
-	category = CAT_PRIMAL
+
 
 
 /obj/item/pen/fountain/captain
@@ -99,8 +96,9 @@
 	throwforce = 5
 	throw_speed = 4
 	colour = "crimson"
-	materials = list(/datum/material/gold = 750)
-	sharpness = IS_SHARP
+	custom_materials = list(/datum/material/gold = 750)
+	sharpness = SHARP
+	bleed_force = BLEED_SURFACE
 	resistance_flags = FIRE_PROOF
 	unique_reskin_icon = list("Oak" = "pen-fountain-o",
 						"Gold" = "pen-fountain-g",
@@ -157,6 +155,7 @@
 		var/penchoice = input(user, "What would you like to edit?", "Rename or change description?") as null|anything in list("Rename","Change description")
 		if(QDELETED(O) || !user.canUseTopic(O, BE_CLOSE))
 			return
+		var/anythingchanged = FALSE
 		if(penchoice == "Rename")
 			var/input = stripped_input(user,"What do you want to name \the [O.name]?", ,"", MAX_NAME_LEN)
 			var/oldname = O.name
@@ -168,27 +167,48 @@
 				O.name = input
 				to_chat(user, "\The [oldname] has been successfully been renamed to \the [input].")
 				O.renamedByPlayer = TRUE
-
+				anythingchanged = TRUE
 		if(penchoice == "Change description")
 			var/input = stripped_input(user,"Describe \the [O.name] here", ,"", 100)
 			if(QDELETED(O) || !user.canUseTopic(O, BE_CLOSE))
 				return
 			O.desc = input
 			to_chat(user, "You have successfully changed \the [O.name]'s description.")
+			anythingchanged = TRUE
+		if(anythingchanged)
+			O.update_icon()
+
+/obj/item/pen/get_writing_implement_details()
+	return list(
+		interaction_mode = MODE_WRITING,
+		font = font,
+		color = colour,
+		use_bold = FALSE,
+	)
 
 /*
  * Sleepypens
  */
 
+/obj/item/pen/sleepy
+
 /obj/item/pen/sleepy/attack(mob/living/M, mob/user)
 	if(!istype(M))
 		return
 
-	if(..())
-		if(reagents.total_volume)
-			if(M.reagents)
-				reagents.trans_to(M, reagents.total_volume, transfered_by = user, methods = INJECT)
-
+	if(reagents?.total_volume && M.reagents)
+		// Obvious message to other people, so that they can call out suspicious activity.
+		to_chat(user, "<span class='notice'>You prepare to engage the sleepy pen's internal mechanism!</span>")
+		if (!do_after(user, 0.5 SECONDS, M) || !..())
+			to_chat(user, "<span class='warning'>You fail to engage the sleepy pen mechanism!</span>")
+			return
+		reagents.trans_to(M, reagents.total_volume, transfered_by = user, method = INJECT)
+		user.visible_message("<span class='warning'>[user] stabs [M] with [src]!</span>", "<span class='notice'>You successfully inject [M] with the pen's contents!</span>", vision_distance = COMBAT_MESSAGE_RANGE, ignored_mobs = list(M))
+		// Looks like a normal pen once it has been used
+		qdel(reagents)
+		reagents = null
+	else
+		return ..()
 
 /obj/item/pen/sleepy/Initialize(mapload)
 	. = ..()
@@ -201,12 +221,13 @@
  * (Alan) Edaggers
  */
 /obj/item/pen/edagger
-	attack_verb = list("slashed", "stabbed", "sliced", "tore", "ripped", "diced", "cut") //these wont show up if the pen is off
+	attack_verb_continuous = list("slashes", "stabs", "slices", "tears", "lacerates", "rips", "dices", "cuts") //these won't show up if the pen is off
+	attack_verb_simple = list("slash", "stab", "slice", "tear", "lacerate", "rip", "dice", "cut")
 	var/on = FALSE
 
 /obj/item/pen/edagger/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/butchering, 60, 100, 0, 'sound/weapons/blade1.ogg', TRUE)
+	AddComponent(/datum/component/butchering, 60, 100, 0, 'sound/weapons/edagger.ogg', TRUE)
 
 /obj/item/pen/edagger/attack_self(mob/living/user)
 	if(on)
@@ -218,6 +239,8 @@
 		hitsound = initial(hitsound)
 		embedding = list(embed_chance = EMBED_CHANCE, armour_block = 30)
 		throwforce = initial(throwforce)
+		sharpness = initial(sharpness)
+		bleed_force = initial(bleed_force)
 		playsound(user, 'sound/weapons/saberoff.ogg', 5, 1)
 		to_chat(user, "<span class='warning'>[src] can now be concealed.</span>")
 	else
@@ -226,9 +249,11 @@
 		throw_speed = 4
 		w_class = WEIGHT_CLASS_NORMAL
 		name = "energy dagger"
-		hitsound = 'sound/weapons/blade1.ogg'
+		hitsound = 'sound/weapons/edagger.ogg'
 		embedding = list(embed_chance = 200, max_damage_mult = 15, armour_block = 40) //rule of cool
 		throwforce = 35
+		sharpness = SHARP_DISMEMBER
+		bleed_force = BLEED_CUT
 		playsound(user, 'sound/weapons/saberon.ogg', 5, 1)
 		to_chat(user, "<span class='warning'>[src] is now active.</span>")
 	updateEmbedding()
@@ -287,7 +312,7 @@
 		return ..()
 	if(!istype(M))
 		return ..()
-	if(user.zone_selected != BODY_ZONE_PRECISE_EYES && user.zone_selected != BODY_ZONE_HEAD)
+	if(!user.is_zone_selected(BODY_ZONE_PRECISE_EYES) && !user.is_zone_selected(BODY_ZONE_HEAD))
 		return ..()
 	if(HAS_TRAIT(user, TRAIT_PACIFISM))
 		to_chat(user, "<span class='warning'>You don't want to harm [M]!</span>")

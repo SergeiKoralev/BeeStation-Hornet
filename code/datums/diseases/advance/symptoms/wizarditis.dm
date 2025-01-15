@@ -1,6 +1,6 @@
 /datum/symptom/wizarditis
 	name = "Wizarditis"
-	desc = "Causes the host to subconciously believe they are in fact, a wizard."
+	desc = "Causes the host to subconsciously believe they are in fact, a wizard."
 	stealth = 1
 	resistance = -2
 	stage_speed = -3
@@ -14,7 +14,7 @@
 	var/teleport = FALSE
 	var/robes = FALSE
 	threshold_desc = "<b>Transmission 8:</b> The host teleports occasionally.<br>\
-					  <b>Stage Speed 7:</b> The host grows a set of wizard robes."
+						<b>Stage Speed 7:</b> The host grows a set of wizard robes."
 
 /datum/symptom/wizarditis/severityset(datum/disease/advance/A)
 	. = ..()
@@ -35,6 +35,8 @@
 	if(!..())
 		return
 	var/mob/living/M = A.affected_mob
+	if(M.stat == DEAD)
+		return
 	switch(A.stage)
 		if(2)
 			if(prob(15) && M.stat != DEAD)

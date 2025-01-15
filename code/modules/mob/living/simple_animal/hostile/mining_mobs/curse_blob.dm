@@ -6,7 +6,8 @@
 	icon_living = "curseblob"
 	icon_aggro = "curseblob"
 	mob_biotypes = list(MOB_SPIRIT)
-	movement_type = FLYING
+	is_flying_animal = TRUE
+	no_flying_animation = TRUE
 	move_to_delay = 5
 	vision_range = 20
 	aggro_vision_range = 20
@@ -14,7 +15,8 @@
 	health = 40
 	melee_damage = 10
 	melee_damage_type = BURN
-	attacktext = "slashes"
+	attack_verb_continuous = "slashes"
+	attack_verb_simple = "slash"
 	attack_sound = 'sound/effects/curseattack.ogg'
 	throw_message = "passes through the smokey body of"
 	obj_damage = 0
@@ -45,10 +47,10 @@
 	our_loop = SSmove_manager.force_move(src, move_target, delay, priority = MOVEMENT_ABOVE_SPACE_PRIORITY)
 	if(!our_loop)
 		return
-	RegisterSignal(move_target, COMSIG_MOB_STATCHANGE, .proc/stat_change)
-	RegisterSignal(move_target, COMSIG_MOVABLE_Z_CHANGED, .proc/target_z_change)
-	RegisterSignal(src, COMSIG_MOVABLE_Z_CHANGED, .proc/our_z_change)
-	RegisterSignal(our_loop, COMSIG_PARENT_QDELETING, .proc/handle_loop_end)
+	RegisterSignal(move_target, COMSIG_MOB_STATCHANGE, PROC_REF(stat_change))
+	RegisterSignal(move_target, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(target_z_change))
+	RegisterSignal(src, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(our_z_change))
+	RegisterSignal(our_loop, COMSIG_PARENT_QDELETING, PROC_REF(handle_loop_end))
 
 /mob/living/simple_animal/hostile/asteroid/curseblob/proc/stat_change(datum/source, new_stat)
 	SIGNAL_HANDLER
@@ -89,12 +91,12 @@
 		return
 
 //if it's not our target, we ignore it
-/mob/living/simple_animal/hostile/asteroid/curseblob/CanAllowThrough(atom/movable/mover, turf/target)
+/mob/living/simple_animal/hostile/asteroid/curseblob/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
 	if(mover == set_target)
 		return FALSE
-	if(istype(mover, /obj/item/projectile))
-		var/obj/item/projectile/P = mover
+	if(istype(mover, /obj/projectile))
+		var/obj/projectile/P = mover
 		if(P.firer == set_target)
 			return FALSE
 
@@ -114,7 +116,7 @@ IGNORE_PROC_IF_NOT_TARGET(attack_animal)
 
 IGNORE_PROC_IF_NOT_TARGET(attack_slime)
 
-/mob/living/simple_animal/hostile/asteroid/curseblob/bullet_act(obj/item/projectile/Proj)
+/mob/living/simple_animal/hostile/asteroid/curseblob/bullet_act(obj/projectile/Proj)
 	if(Proj.firer != set_target)
 		return
 	return ..()

@@ -35,6 +35,8 @@ transformative extracts:
 	if(S.transformeffects & SLIME_EFFECT_PINK)
 		var/datum/language_holder/LH = S.get_language_holder()
 		LH.selected_language = /datum/language/slime
+	if(S.transformeffects & SLIME_EFFECT_SEPIA)
+		S.add_movespeed_modifier(/datum/movespeed_modifier/status_effect/transformative_sepia)
 
 /obj/item/slimecross/transformative/grey
 	colour = "grey"
@@ -126,7 +128,7 @@ transformative extracts:
 
 /obj/item/slimecross/transformative/pink/do_effect(mob/living/simple_animal/slime/S)
 	..()
-	S.grant_language(/datum/language/common, TRUE, TRUE)
+	S.grant_language(/datum/language/common)
 	var/datum/language_holder/LH = S.get_language_holder()
 	LH.selected_language = /datum/language/common
 

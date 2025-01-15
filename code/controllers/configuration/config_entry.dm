@@ -1,10 +1,3 @@
-#define VALUE_MODE_NUM 0
-#define VALUE_MODE_TEXT 1
-#define VALUE_MODE_FLAG 2
-
-#define KEY_MODE_TEXT 0
-#define KEY_MODE_TYPE 1
-
 /datum/config_entry
 	var/name	//read-only, this is determined by the last portion of the derived entry type
 	var/config_entry_value
@@ -25,7 +18,7 @@
 /datum/config_entry/New()
 	if(type == abstract_type)
 		CRASH("Abstract config entry [type] instatiated!")
-	name = lowertext(type2top(type))
+	name = LOWER_TEXT(type2top(type))
 	if(islist(config_entry_value))
 		var/list/L = config_entry_value
 		default = L.Copy()
@@ -42,7 +35,7 @@
 		. &= !(protection & CONFIG_ENTRY_HIDDEN)
 
 /datum/config_entry/vv_edit_var(var_name, var_value)
-	var/static/list/banned_edits = list(NAMEOF(src, name), NAMEOF(src, vv_VAS), NAMEOF(src, default), NAMEOF(src, resident_file), NAMEOF(src, protection), NAMEOF(src, abstract_type), NAMEOF(src, modified), NAMEOF(src, dupes_allowed))
+	var/static/list/banned_edits = list(NAMEOF_STATIC(src, name), NAMEOF_STATIC(src, vv_VAS), NAMEOF_STATIC(src, default), NAMEOF_STATIC(src, resident_file), NAMEOF_STATIC(src, protection), NAMEOF_STATIC(src, abstract_type), NAMEOF_STATIC(src, modified), NAMEOF_STATIC(src, dupes_allowed))
 	if(var_name == NAMEOF(src, config_entry_value))
 		if(protection & CONFIG_ENTRY_LOCKED)
 			return FALSE
@@ -98,14 +91,14 @@
 		return FALSE
 	var/temp = text2num(trim(str_val))
 	if(!isnull(temp))
-		config_entry_value = CLAMP(integer ? round(temp) : temp, min_val, max_val)
+		config_entry_value = clamp(integer ? round(temp) : temp, min_val, max_val)
 		if(config_entry_value != temp && !(datum_flags & DF_VAR_EDITED))
 			log_config("Changing [name] from [temp] to [config_entry_value]!")
 		return TRUE
 	return FALSE
 
 /datum/config_entry/number/vv_edit_var(var_name, var_value)
-	var/static/list/banned_edits = list(NAMEOF(src, max_val), NAMEOF(src, min_val), NAMEOF(src, integer))
+	var/static/list/banned_edits = list(NAMEOF_STATIC(src, max_val), NAMEOF_STATIC(src, min_val), NAMEOF_STATIC(src, integer))
 	return !(var_name in banned_edits) && ..()
 
 /datum/config_entry/flag
@@ -178,7 +171,7 @@
 	if(key_pos || value_mode == VALUE_MODE_FLAG)
 		key_name = copytext(str_val, 1, key_pos)
 		if(!case_sensitive)
-			key_name = lowertext(key_name)
+			key_name = LOWER_TEXT(key_name)
 		if(key_pos)
 			key_value = copytext(str_val, key_pos + length(str_val[key_pos]))
 		var/new_key

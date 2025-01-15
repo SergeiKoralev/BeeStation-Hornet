@@ -9,14 +9,15 @@
 	throwforce = 10
 	throw_speed = 3
 	throw_range = 7
-	w_class = WEIGHT_CLASS_NORMAL
-	attack_verb = list("swept", "brushed off", "bludgeoned", "whacked")
+	w_class = WEIGHT_CLASS_LARGE
+	attack_verb_continuous = list("sweeps", "brushes off", "bludgeons", "whacks")
+	attack_verb_simple = list("sweep", "brush off", "bludgeon", "whack")
 	resistance_flags = FLAMMABLE
 
 /obj/item/pushbroom/Initialize(mapload)
 	. = ..()
-	RegisterSignal(src, COMSIG_TWOHANDED_WIELD, .proc/on_wield)
-	RegisterSignal(src, COMSIG_TWOHANDED_UNWIELD, .proc/on_unwield)
+	RegisterSignal(src, COMSIG_TWOHANDED_WIELD, PROC_REF(on_wield))
+	RegisterSignal(src, COMSIG_TWOHANDED_UNWIELD, PROC_REF(on_unwield))
 
 /obj/item/pushbroom/ComponentInitialize()
 	. = ..()
@@ -31,7 +32,7 @@
 	SIGNAL_HANDLER
 
 	to_chat(user, "<span class='notice'>You brace the [src] against the ground in a firm sweeping stance.</span>")
-	RegisterSignal(user, COMSIG_MOVABLE_MOVED, .proc/sweep)
+	RegisterSignal(user, COMSIG_MOVABLE_MOVED, PROC_REF(sweep))
 
 /// triggered on unwield of two handed item
 /obj/item/pushbroom/proc/on_unwield(obj/item/source, mob/user)

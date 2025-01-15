@@ -6,9 +6,12 @@
 	///we remove 5 reagents per second
 	var/disposal_rate = 5
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/plumbing/disposer)
+
 /obj/machinery/plumbing/disposer/Initialize(mapload, bolt)
 	. = ..()
 	AddComponent(/datum/component/plumbing/simple_demand, bolt)
+	update_appearance() //so the input/output pipes will overlay properly during init
 
 /obj/machinery/plumbing/disposer/process(delta_time)
 	if(machine_stat & NOPOWER)

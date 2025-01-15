@@ -10,6 +10,12 @@
 	var/mission = "Assist the station."
 	var/teamsize = 5
 	var/polldesc
+	/// If TRUE, gives the team members "[role] [random last name]" style names
+	var/random_names = TRUE
+	/// If TRUE, the admin who created the response team will be spawned in the briefing room in their preferred briefing outfit (assuming they're a ghost)
+	var/spawn_admin = FALSE
+	/// If TRUE, we try and pick one of the most experienced players who volunteered to fill the leader slot
+	var/leader_experience = TRUE
 
 /datum/ert/New()
 	if (!polldesc)
@@ -39,10 +45,12 @@
 	code = "Green"
 	teamsize = 1
 	opendoors = FALSE
-	leader_role = /datum/antagonist/official
-	roles = list(/datum/antagonist/official)
+	leader_role = /datum/antagonist/ert/official
+	roles = list(/datum/antagonist/ert/official)
 	rename_team = "CentCom Officials"
 	polldesc = "a CentCom Official"
+	random_names = FALSE
+	leader_experience = FALSE
 
 /datum/ert/centcom_official/New()
 	mission = "Conduct a routine performance review of [station_name()] and its Captain."
@@ -63,6 +71,15 @@
 	mission = "Clean up EVERYTHING."
 	polldesc = "a Nanotrasen Janitorial Response Team"
 
+/datum/ert/engineer
+	roles = list(/datum/antagonist/ert/engineer)
+	leader_role = /datum/antagonist/ert/engineer
+	teamsize = 3
+	opendoors = FALSE
+	rename_team = "Nanotrasen Repair Crew"
+	mission = "Restore the station to working order."
+	polldesc = "a Nanotrasen Engineering Response Team"
+
 /datum/ert/intern
 	roles = list(/datum/antagonist/ert/intern)
 	leader_role = /datum/antagonist/ert/intern/leader
@@ -71,6 +88,21 @@
 	rename_team = "Horde of Interns"
 	mission = "Assist in conflict resolution."
 	polldesc = "an unpaid internship opportunity with Nanotrasen"
+	random_names = FALSE
+
+/datum/ert/intern/unarmed
+	roles = list(/datum/antagonist/ert/intern/unarmed)
+	leader_role = /datum/antagonist/ert/intern/leader/unarmed
+	rename_team = "Unarmed Horde of Interns"
+
+/datum/ert/lawyer
+	roles = list(/datum/antagonist/ert/lawyer)
+	leader_role = /datum/antagonist/ert/lawyer
+	teamsize = 7
+	opendoors = FALSE
+	rename_team = "Law-Firm-In-A-Box"
+	mission = "Assist in legal matters."
+	polldesc = "a partnership with an up-and-coming Nanotrasen law firm"
 
 /datum/ert/doomguy
 	roles = list(/datum/antagonist/ert/doomguy)
@@ -109,3 +141,13 @@
 	mission = "Eliminate the kudzu with extreme prejudice"
 	polldesc = "an elite gardening team"
 	code = "Vine Green"
+
+/datum/ert/bounty_hunters
+	roles = list(/datum/antagonist/ert/bounty_armor, /datum/antagonist/ert/bounty_hook, /datum/antagonist/ert/bounty_synth)
+	leader_role = /datum/antagonist/ert/bounty_armor
+	teamsize = 3
+	opendoors = FALSE
+	rename_team = "Bounty Hunters"
+	mission = "Assist the station in catching perps, dead or alive."
+	polldesc = "a Centcom-hired bounty hunting gang"
+	random_names = FALSE

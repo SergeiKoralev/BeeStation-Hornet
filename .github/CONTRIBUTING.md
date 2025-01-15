@@ -43,11 +43,13 @@ You can of course, as always, ask for help on our discord.
 
 In addition to VSCode, several other tools exist to make your life easier.
 
-* Git client - [GitKraken](https://www.gitkraken.com/)
+* Git client - [GitKraken](https://www.gitkraken.com/) or [Command line (recommended)](https://git-scm.com/downloads)
+    * See [Guide to git](https://wiki.beestation13.com/view/Guide_to_git) for more detailed information
 * Code editing - [VSCode](https://code.visualstudio.com/) (NOT THE SAME AS VISUAL STUDIO)
 * VSCode Extensions - You will be prompted to install this recommended extension automatically: [Goonstation Extension Pack](https://marketplace.visualstudio.com/items?itemName=Goonstation.goonstation-extpack)
 * Map editing - [StrongDMM](https://github.com/SpaiR/StrongDMM) or [FastDMM2](https://fastdmm2.ss13.io/). Dream Maker works but requires additional steps for SS13 that these automate.
 * Icon editing - Dream Maker or your image editor of choice. Any PNG can be imported into Dream Maker.
+* Database - MariaDB: [Setup guide](https://wiki.beestation13.com/view/Working_with_the_database#Database_Setup)
 
 ## 4. Code Standards
 There are a variety of ways you can write valid DM code. However, BeeStation is not as lenient. Maintaining good code standards is important for performance and readability reasons. You can find details about our code standards [here](https://github.com/BeeStation/BeeStation-Hornet/wiki/Code-Standards).
@@ -108,6 +110,7 @@ Any pull-request that does not adequately complete the provided template may be 
  - The section labeled "why it's good for the game" should include the reasons behind the changes and how they will be good for the game.
  - The testing section should contain screenshots, videos, and/or reproducible testing procedures showing that the PR works as specified. Pull-requests that ignore this section, or are not tested, may be closed by maintainers. This applies to small PRs that may seem trivial.
  - The changelog should include a short summary of the changes made. If your pull request includes things made by other people, you should list everybody who contributed, including yourself, after the :cl: tag.
+ - Ports should indicate any original code that they have added for the port. This includes highlighting any mass-edit statements done via regex, and any bee specific content that had to be modified to accomodate the changes.
 
 If a pull-request requires updates to the wiki, these changes should be made on your user account page (For example: https://wiki.beestation13.com/view/User:PowerfulBacon), so that the original page can be updated on merge.
 

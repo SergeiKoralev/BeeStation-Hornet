@@ -15,8 +15,8 @@ GLOBAL_DATUM(rpgtitle_controller, /datum/rpgtitle_controller)
 
 /datum/rpgtitle_controller/New()
 	. = ..()
-	RegisterSignal(SSdcs, COMSIG_GLOB_CREWMEMBER_JOINED, .proc/on_crewmember_join)
-	RegisterSignal(SSdcs, COMSIG_GLOB_MOB_LOGGED_IN, .proc/on_mob_login)
+	RegisterSignal(SSdcs, COMSIG_GLOB_CREWMEMBER_JOINED, PROC_REF(on_crewmember_join))
+	RegisterSignal(SSdcs, COMSIG_GLOB_MOB_LOGGED_IN, PROC_REF(on_mob_login))
 	handle_current_jobs()
 
 /datum/rpgtitle_controller/Destroy(force)
@@ -43,7 +43,7 @@ GLOBAL_DATUM(rpgtitle_controller, /datum/rpgtitle_controller)
 	new_crewmember.maptext_x = -24
 	new_crewmember.maptext_y = 32
 
-    //list of lists involving strings related to a biotype flag, their position in the list equal to the position they were defined as bitflags.
+	//list of lists involving strings related to a biotype flag, their position in the list equal to the position they were defined as bitflags.
 	//the first list entry is an adjective, the second is a noun. if null, we don't want to describe this biotype, and so even if the mob
 	//has that biotype, the null is skipped
 	var/list/biotype_titles = list(

@@ -13,7 +13,7 @@
 
 /datum/action/breathe
 	name = "Inhale"
-	icon_icon = 'icons/mob/actions/actions_hive.dmi'
+	icon_icon = 'icons/hud/actions/actions_hive.dmi'
 	button_icon_state = "add"									//Feel free to replace
 	var/datum/emote/next_emote = "inhale"
 
@@ -52,11 +52,11 @@
 	return ..()
 
 /datum/component/manual_breathing/RegisterWithParent()
-	RegisterSignal(parent, COMSIG_MOB_EMOTE, .proc/check_emote)
-	RegisterSignal(parent, COMSIG_CARBON_GAIN_ORGAN, .proc/check_added_organ)
-	RegisterSignal(parent, COMSIG_CARBON_LOSE_ORGAN, .proc/check_removed_organ)
-	RegisterSignal(parent, COMSIG_LIVING_REVIVE, .proc/restart)
-	RegisterSignal(parent, COMSIG_MOB_DEATH, .proc/pause)
+	RegisterSignal(parent, COMSIG_MOB_EMOTE, PROC_REF(check_emote))
+	RegisterSignal(parent, COMSIG_CARBON_GAIN_ORGAN, PROC_REF(check_added_organ))
+	RegisterSignal(parent, COMSIG_CARBON_LOSE_ORGAN, PROC_REF(check_removed_organ))
+	RegisterSignal(parent, COMSIG_LIVING_REVIVE, PROC_REF(restart))
+	RegisterSignal(parent, COMSIG_MOB_DEATH, PROC_REF(pause))
 
 /datum/component/manual_breathing/UnregisterFromParent()
 	UnregisterSignal(parent, COMSIG_MOB_EMOTE)

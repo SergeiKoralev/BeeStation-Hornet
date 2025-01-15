@@ -13,6 +13,8 @@
 	var/datum/picture/picture
 	var/scribble		//Scribble on the back.
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/photo)
+
 /obj/item/photo/Initialize(mapload, datum/picture/P, datum_name = TRUE, datum_desc = TRUE)
 	set_picture(P, datum_name, datum_desc, TRUE)
 	return ..()
@@ -58,7 +60,7 @@
 			to_chat(user, "<span class='notice'>You scribble illegibly on [src]!</span>")
 			return
 
-		var/txt = stripped_input(user, "What would you like to write on the back?", "Photo Writing", max_length=128)
+		var/txt = stripped_input(user, "What would you like to write on the back? 256 characters max.", "Photo Writing", max_length=256)
 
 		if(txt && user.canUseTopic(src, BE_CLOSE))
 			scribble = txt
@@ -93,5 +95,5 @@
 	var/n_name = stripped_input(usr, "What would you like to label the photo?", "Photo Labelling", max_length=MAX_NAME_LEN)
 	//loc.loc check is for making possible renaming photos in clipboards
 	if(n_name && (loc == usr || loc.loc && loc.loc == usr) && usr.stat == CONSCIOUS && !usr.incapacitated())
-		name = "photo[(n_name ? text("- '[n_name]'") : null)]"
+		name = "photo[(n_name ? "- '[n_name]'" : null)]"
 	add_fingerprint(usr)

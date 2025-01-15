@@ -16,13 +16,13 @@
 	if(!placement_override)
 		if(!pop_override)
 			for(var/mob/living/M in range(7, src))
-				if(ROLE_BLOB in M.faction)
+				if(FACTION_BLOB in M.faction)
 					continue
 				if(M.client)
 					to_chat(src, "<span class='warning'>There is someone too close to place your blob core!</span>")
 					return FALSE
 			for(var/mob/living/M in hearers(13, src))
-				if(ROLE_BLOB in M.faction)
+				if(FACTION_BLOB in M.faction)
 					continue
 				if(M.client)
 					to_chat(src, "<span class='warning'>Someone could see your blob core from here!</span>")
@@ -128,7 +128,7 @@
 	if(S)
 		if(!can_buy(BLOB_REFLECTOR_COST))
 			return
-		if(S.obj_integrity < S.max_integrity * 0.5)
+		if(S.get_integrity() < S.max_integrity * 0.5)
 			add_points(BLOB_REFLECTOR_COST)
 			to_chat(src, "<span class='warning'>This shield blob is too damaged to be modified properly!</span>")
 			return
@@ -167,7 +167,7 @@
 	if(B.naut) //if it already made a blobbernaut, it can't do it again
 		to_chat(src, "<span class='warning'>This factory blob is already sustaining a blobbernaut.</span>")
 		return
-	if(B.obj_integrity < B.max_integrity * 0.5)
+	if(B.get_integrity() < B.max_integrity * 0.5)
 		to_chat(src, "<span class='warning'>This factory blob is too damaged to sustain a blobbernaut.</span>")
 		return
 	if(!can_buy(40))
@@ -175,10 +175,9 @@
 
 	B.naut = TRUE	//temporary placeholder to prevent creation of more than one per factory.
 	to_chat(src, "<span class='notice'>You attempt to produce a blobbernaut.</span>")
-	var/list/mob/dead/observer/candidates = pollGhostCandidates("Do you want to play as a [blobstrain.name] blobbernaut?", ROLE_BLOB, null, ROLE_BLOB, 50) //players must answer rapidly
+	var/list/mob/dead/observer/candidates = poll_ghost_candidates("Do you want to play as a [blobstrain.name] blobbernaut?", ROLE_BLOB, /datum/role_preference/midround_ghost/blob, 7.5 SECONDS, ignore_category = POLL_IGNORE_BLOB_HELPER) //players must answer rapidly
 	if(LAZYLEN(candidates)) //if we got at least one candidate, they're a blobbernaut now.
-		B.max_integrity = initial(B.max_integrity) * 0.25 //factories that produced a blobbernaut have much lower health
-		B.obj_integrity = min(B.obj_integrity, B.max_integrity)
+		B.modify_max_integrity(initial(B.max_integrity) * 0.25) //factories that produced a blobbernaut have much lower health
 		B.update_icon()
 		B.visible_message("<span class='warning'><b>The blobbernaut [pick("rips", "tears", "shreds")] its way out of the factory blob!</b></span>")
 		playsound(B.loc, 'sound/effects/splat.ogg', 50, 1)
@@ -253,8 +252,8 @@
 
 /mob/camera/blob/verb/expand_blob_power()
 	set category = "Blob"
-	set name = "Expand/Attack Blob ([BLOB_SPREAD_COST])"
-	set desc = "Attempts to create a new blob in this tile. If the tile isn't clear, instead attacks it, damaging mobs and objects and refunding [BLOB_ATTACK_REFUND] points."
+	set name = "Expand/Attack Blob"
+	set desc = "Attempts to create a new blob in this tile. If the tile isn't clear, instead attacks it, damaging mobs, objects and refunding its cost."
 	var/turf/T = get_turf(src)
 	expand_blob(T)
 
@@ -270,7 +269,7 @@
 	if(can_buy(BLOB_SPREAD_COST))
 		var/attacksuccess = FALSE
 		for(var/mob/living/L in T)
-			if(ROLE_BLOB in L.faction) //no friendly/dead fire
+			if(FACTION_BLOB in L.faction) //no friendly/dead fire
 				continue
 			if(L.stat != DEAD)
 				attacksuccess = TRUE

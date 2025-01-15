@@ -8,7 +8,7 @@
 	invisibility = 60
 	resistance_flags = LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 
-/obj/effect/dummy/phased_mob/slaughter/relaymove(mob/user, direction)
+/obj/effect/dummy/phased_mob/slaughter/relaymove(mob/living/user, direction)
 	forceMove(get_step(src,direction))
 
 /obj/effect/dummy/phased_mob/slaughter/ex_act()
@@ -66,7 +66,7 @@
 		return
 
 	// if the thing we're pulling isn't alive
-	if (!isliving(pullee))
+	if (!isliving(pullee) || ismegafauna(pullee))
 		return
 
 	var/mob/living/victim = pullee
@@ -126,8 +126,9 @@
 	to_chat(src, "<span class='danger'>You devour [victim]. Your health is fully restored.</span>")
 	src.revive(full_heal = 1)
 
-	// No defib possible after laughter
-	victim.adjustBruteLoss(1000)
+	victim.apply_damage(200, BRUTE)
+	if(victim.stat != DEAD)
+		victim.investigate_log("has been killed by being consumed by a slaugter demon.", INVESTIGATE_DEATHS)
 	victim.death()
 	bloodcrawl_swallow(victim)
 	return TRUE
@@ -153,7 +154,7 @@
 		newcolor = rgb(43, 186, 0)
 	add_atom_colour(newcolor, TEMPORARY_COLOUR_PRIORITY)
 	// but only for a few seconds
-	addtimer(CALLBACK(src, /atom/.proc/remove_atom_colour, TEMPORARY_COLOUR_PRIORITY, newcolor), 6 SECONDS)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, remove_atom_colour), TEMPORARY_COLOUR_PRIORITY, newcolor), 6 SECONDS)
 
 /mob/living/proc/phasein(obj/effect/decal/cleanable/B)
 	if(src.notransform)
@@ -165,7 +166,7 @@
 	if(!B)
 		return
 	forceMove(B.loc)
-	src.client.eye = src
+	src.client.set_eye(src)
 	src.visible_message("<span class='warning'><B>[src] rises out of the pool of blood!</B></span>")
 	exit_blood_effect(B)
 	if(iscarbon(src))

@@ -1,7 +1,7 @@
-///a reaction chamber for plumbing. pretty much everything can react, but this one keeps the reagents seperated and only reacts under your given terms
+///a reaction chamber for plumbing. pretty much everything can react, but this one keeps the reagents separated and only reacts under your given terms
 /obj/machinery/plumbing/reaction_chamber
 	name = "reaction chamber"
-	desc = "Keeps chemicals seperated until given conditions are met."
+	desc = "Keeps chemicals separated until given conditions are met."
 	icon_state = "reaction_chamber"
 
 	buffer = 200
@@ -15,9 +15,12 @@
 	///our reagent goal has been reached, so now we lock our inputs and start emptying
 	var/emptying = FALSE
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/plumbing/reaction_chamber)
+
 /obj/machinery/plumbing/reaction_chamber/Initialize(mapload, bolt)
 	. = ..()
 	AddComponent(/datum/component/plumbing/reaction_chamber, bolt)
+	update_appearance() //so the input/output pipes will overlay properly during init
 
 /obj/machinery/plumbing/reaction_chamber/on_reagent_change()
 	if(reagents.total_volume == 0 && emptying) //we were emptying, but now we aren't

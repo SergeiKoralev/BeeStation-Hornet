@@ -56,7 +56,7 @@
 /obj/item/resonator/pre_attack(atom/target, mob/user, params)
 	if(check_allowed_items(target, 1))
 		CreateResonance(target, user)
-	return TRUE
+	. = ..()
 
 //resonance field, crushes rock, damages mobs
 /obj/effect/temp_visual/resonance
@@ -65,10 +65,12 @@
 	icon_state = "shield1"
 	layer = ABOVE_ALL_MOB_LAYER
 	duration = 50
-	var/resonance_damage = 20
+	var/resonance_damage = 10
 	var/damage_multiplier = 1
 	var/creator
 	var/obj/item/resonator/res
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/effect/temp_visual/resonance)
 
 /obj/effect/temp_visual/resonance/Initialize(mapload, set_creator, set_resonator, set_duration)
 	duration = set_duration
@@ -81,7 +83,7 @@
 	transform = matrix()*0.75
 	animate(src, transform = matrix()*1.5, time = duration)
 	deltimer(timerid)
-	timerid = addtimer(CALLBACK(src, .proc/burst), duration, TIMER_STOPPABLE)
+	timerid = addtimer(CALLBACK(src, PROC_REF(burst)), duration, TIMER_STOPPABLE)
 
 /obj/effect/temp_visual/resonance/Destroy()
 	if(res)

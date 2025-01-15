@@ -6,11 +6,12 @@
 	var/coverage_goal = 500
 
 /datum/station_goal/station_shield/get_report()
-	return {"The station is located in a zone full of space debris.
-			 We have a prototype shielding system you must deploy to reduce collision-related accidents.
-
-			 You can order the satellites and control systems at cargo.
-			 "}
+	return list(
+		"<blockquote>The station is located in a zone full of space debris.",
+		"We have a prototype shielding system you must deploy to reduce collision-related accidents.",
+		"",
+		"You can order the satellites and control systems at cargo.</blockquote>",
+	).Join("\n")
 
 /datum/station_goal/station_shield/check_completion()
 	if(..())
@@ -101,6 +102,17 @@
 /obj/machinery/satellite/interact(mob/user)
 	toggle(user)
 
+/obj/machinery/satellite/set_anchored(anchorvalue)
+	. = ..()
+	if(isnull(.))
+		return //no need to process if we didn't change anything.
+	active = anchorvalue
+	if(anchorvalue)
+		animate(src, pixel_y = 2, time = 10, loop = -1)
+	else
+		animate(src, pixel_y = 0, time = 10)
+	update_icon()
+
 /obj/machinery/satellite/proc/toggle(mob/user)
 	if(!active && !isinspace())
 		if(user)
@@ -108,16 +120,8 @@
 		return FALSE
 	if(user)
 		to_chat(user, "<span class='notice'>You [active ? "deactivate": "activate"] [src].</span>")
-	active = !active
-	if(active)
-		begin_processing()
-		animate(src, pixel_y = 2, time = 10, loop = -1)
-		anchored = TRUE
-	else
-		end_processing()
-		animate(src, pixel_y = 0, time = 10)
-		anchored = FALSE
-	update_icon()
+	set_anchored(!anchored)
+	return TRUE
 
 /obj/machinery/satellite/update_icon()
 	icon_state = active ? "sat_active" : "sat_inactive"
@@ -126,13 +130,29 @@
 	to_chat(user, "<span class='notice'>// NTSAT-[id] // Mode : [active ? "PRIMARY" : "STANDBY"] //[(obj_flags & EMAGGED) ? "DEBUG_MODE //" : ""]</span>")
 	return TRUE
 
+/obj/item/meteor_shield
+	name = "\improper Meteor Shield Satellite Deploy Capsule"
+	desc = "A bluespace capsule which a single unit of meteor shield satellite is compressed within. If you activate this capsule, a meteor shield satellite will pop out. You still need to install these."
+	icon = 'icons/obj/mining.dmi'
+	icon_state = "capsule"
+	w_class = WEIGHT_CLASS_NORMAL
+
+/obj/item/meteor_shield/ComponentInitialize()
+	. = ..()
+	AddComponent(/datum/component/deployable, /obj/machinery/satellite/meteor_shield, time_to_deploy = 0)
+
 /obj/machinery/satellite/meteor_shield
 	name = "\improper Meteor Shield Satellite"
 	desc = "A meteor point-defense satellite."
 	mode = "M-SHIELD"
-	processing_flags = START_PROCESSING_MANUALLY
-	subsystem_type = /datum/controller/subsystem/processing/fastprocess
 	var/kill_range = 14
+	///Proximity monitor associated with this atom, needed for proximity checks.
+	var/datum/proximity_monitor/proximity_monitor
+
+
+/obj/machinery/satellite/meteor_shield/Initialize(mapload)
+	. = ..()
+	proximity_monitor = new(src, 0)
 
 /obj/machinery/satellite/meteor_shield/proc/space_los(meteor)
 	for(var/turf/T in getline(src,meteor))
@@ -140,21 +160,18 @@
 			return FALSE
 	return TRUE
 
-/obj/machinery/satellite/meteor_shield/process()
-	if(!active)
-		return
-	for(var/obj/effect/meteor/M in GLOB.meteor_list)
-		if(M.get_virtual_z_level() != get_virtual_z_level())
-			continue
-		if(get_dist(M,src) > kill_range)
-			continue
-		if(!(obj_flags & EMAGGED) && space_los(M))
-			Beam(get_turf(M),icon_state="sat_beam",time=5,maxdistance=kill_range)
-			qdel(M)
+/obj/machinery/satellite/meteor_shield/HasProximity(atom/movable/AM)
+	if(istype(AM, /obj/effect/meteor))
+		if(!(obj_flags & EMAGGED) && space_los(AM))
+			Beam(get_turf(AM),icon_state="sat_beam", time = 5)
+			qdel(AM)
 
 /obj/machinery/satellite/meteor_shield/toggle(user)
 	if(!..(user))
 		return FALSE
+
+	proximity_monitor.set_range(active ? kill_range : 0)
+
 	if(obj_flags & EMAGGED)
 		if(active)
 			change_meteor_chance(2)

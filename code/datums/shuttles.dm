@@ -75,12 +75,10 @@
 							locate(min(T.x+width-1, world.maxx), min(T.y+height-1, world.maxy), T.z))
 	for(var/turf/turf in turfs)
 		turfs[turf] = turf.loc
-	keep_cached_map = TRUE //We need to access some stuff here below for shuttle skipovers
 	. = ..(T, centered, init_atmos, finalize, register, turfs)
 
-/datum/map_template/shuttle/on_placement_completed(datum/map_generator/map_gen, turf/T, init_atmos, datum/parsed_map/parsed, finalize = TRUE, register = TRUE, list/turfs)
+/datum/map_template/shuttle/on_placement_completed(datum/async_map_generator/map_place/map_gen, turf/T, init_atmos, datum/parsed_map/parsed, finalize = TRUE, register = TRUE, list/turfs)
 	. = ..(map_gen, T, TRUE, parsed, FALSE)
-	keep_cached_map = initial(keep_cached_map)
 	if(!.)
 		log_runtime("Failed to load shuttle [map_gen.get_name()].")
 		return
@@ -140,7 +138,7 @@
 			line = gset.gridLines[length(gset.gridLines) - y_offset] //Y goes from top to bottom
 			if((gset.xcrd - 1 < x_offset) || (gset.xcrd + (length(line)/cached_map.key_len) - 2 > x_offset)) ///Our x coord isn't in the bounds
 				continue
-			cache = cached_map.modelCache[copytext(line, 1+((x_offset-gset.xcrd+1)*cached_map.key_len), 1+((x_offset-gset.xcrd+2)*cached_map.key_len))]
+			cache = map_gen.placing_template.modelCache[copytext(line, 1+((x_offset-gset.xcrd+1)*cached_map.key_len), 1+((x_offset-gset.xcrd+2)*cached_map.key_len))]
 			break
 		if(!cache) //Our turf isn't in the cached map, something went very wrong
 			continue
@@ -160,18 +158,20 @@
 
 		if(!islist(shuttle_turf.baseturfs))
 			shuttle_turf.baseturfs = list(shuttle_turf.baseturfs)
-		shuttle_turf.baseturfs.Insert(shuttle_turf.baseturfs.len + 1 - baseturf_length, /turf/baseturf_skipover/shuttle)
+
+		var/list/sanity = shuttle_turf.baseturfs.Copy()
+		sanity.Insert(shuttle_turf.baseturfs.len + 1 - baseturf_length, /turf/baseturf_skipover/shuttle)
+		shuttle_turf.baseturfs = baseturfs_string_list(sanity, shuttle_turf)
 
 	//If this is a superfunction call, we don't want to initialize atoms here, let the subfunction handle that
 	if(finalize)
+		maps_loading --
+
 		//initialize things that are normally initialized after map load
 		initTemplateBounds(., init_atmos)
 
 		log_game("[name] loaded at [T.x],[T.y],[T.z]")
 
-	maps_loading --
-	if (!maps_loading)
-		cached_map = keep_cached_map ? cached_map : null
 
 //Whatever special stuff you want
 /datum/map_template/shuttle/proc/post_load(obj/docking_port/mobile/M)
@@ -261,7 +261,7 @@
 /datum/map_template/shuttle/emergency/airless/post_load()
 	. = ..()
 	//enable buying engines from cargo
-	var/datum/supply_pack/P = SSshuttle.supply_packs[/datum/supply_pack/engineering/shuttle_engine]
+	var/datum/supply_pack/P = SSsupply.supply_packs[/datum/supply_pack/engineering/shuttle_engine]
 	P.special_enabled = TRUE
 
 
@@ -277,6 +277,13 @@
 	description = "Features include sentient bar staff (a Bardrone and a Barmaid), bathroom, a quality lounge for the heads, and a large gathering table."
 	admin_notes = "Bardrone and Barmaid are GODMODE, will be automatically sentienced by the fun balloon at 60 seconds before arrival. \
 	Has medical facilities."
+	credit_cost = 5000
+
+/datum/map_template/shuttle/emergency/theatre
+	suffix = "theatre"
+	name = "The Emergency Fancy Theatre"
+	description = "Put on your best show with the emergency theatre on the couple minutes it takes you to get to CentCom! Includes a medbay, cockpit, brig and tons of fancy stuff for the crew"
+	admin_notes = "Theatre with seats, brig, cockpit and medbay included, for shows or improvisation by the crewmembers"
 	credit_cost = 5000
 
 /datum/map_template/shuttle/emergency/pod
@@ -310,6 +317,14 @@
 	extra_desc = "This shuttle costs 500 credits to board."
 	admin_notes = "Due to the limited space for non paying crew, this shuttle may cause a riot."
 	credit_cost = 10000
+	danger_level = SHUTTLE_DANGER_SUBPAR
+
+/datum/map_template/shuttle/emergency/funnypod
+	suffix = "funnypod"
+	name = "Comically Large Escape Pod"
+	description = "A bunch of scrapped escape pods glued together."
+	admin_notes = "This shuttle will 100% cause mayhem, as the space avaiable is 1x23 and anyone can open the door in the end."
+	credit_cost = 2000
 	danger_level = SHUTTLE_DANGER_SUBPAR
 
 /datum/map_template/shuttle/emergency/discoinferno
@@ -446,6 +461,13 @@
 	admin_notes = "Choo choo motherfucker!"
 	credit_cost = 1000
 
+/datum/map_template/shuttle/emergency/tiny
+	suffix = "tiny"
+	name = "Echo Station Emergency Shuttle"
+	description = "A small emergancy escape shuttle"
+	admin_notes = "A *very* small shuttle"
+	credit_cost = 1000
+
 /datum/map_template/shuttle/emergency/cere
 	suffix = "cere"
 	name = "Cere Station Emergency Shuttle"
@@ -513,6 +535,11 @@
 	Oh and lizard meat too,mighty popular that is. Definitely 100% fresh, just ask this guy here. *person on meatspike moans* See? \
 	Definitely high quality meat, nothin' wrong with it, nothin' added, definitely no zombifyin' reagents!"
 	admin_notes = "Meat currently contains no zombifying reagents, lizard on meatspike must be spawned in."
+
+/datum/map_template/shuttle/ferry/standard
+	suffix = "standard"
+	name = "standard nanotrasen ferry"
+	description = "The standard Nanotrasen ERT Ferry, comes with everything you need to assist the station!"
 
 /datum/map_template/shuttle/ferry/lighthouse
 	suffix = "lighthouse"
@@ -597,6 +624,15 @@
 	admin_notes = "Has an on-board experimental cloner that creates copies of its user, alien surgery tools, and a void core that provides unlimited power."
 	credit_cost = 8000
 
+/datum/map_template/shuttle/emergency/ragecage
+	suffix = "ragecage"
+	name = "THE RAGE CAGE"
+	description = "An abandoned underground electrified fight arena turned into a shuttle. Comes with a Brig, Medbay and Cockpit included."
+	admin_notes = "It's a normal shuttle but it has a rage cage with baseball bats in the middle powered by a PACMAN, plasma included."
+	credit_cost = 7500
+	danger_level = SHUTTLE_DANGER_SUBPAR
+
+
 /datum/map_template/shuttle/emergency/zeta/prerequisites_met()
 	if(SHUTTLE_UNLOCK_ALIENTECH in SSshuttle.shuttle_purchase_requirements_met)
 		return TRUE
@@ -646,6 +682,22 @@
 	suffix = "large"
 	name = "mining shuttle (Large)"
 
+/datum/map_template/shuttle/mining/rad
+	suffix = "rad"
+	name = "mining shuttle (Rad)"
+
+/datum/map_template/shuttle/mining/tiny
+	suffix = "tiny"
+	name = "mining shuttle (Tiny)"
+
+/datum/map_template/shuttle/cargo/rad
+	suffix = "rad"
+	name = "cargo ferry (Rad)"
+
+/datum/map_template/shuttle/cargo/tiny
+	suffix = "tiny"
+	name = "cargo ferry (Tiny)"
+
 /datum/map_template/shuttle/science
 	port_id = "science"
 	suffix = "outpost"
@@ -670,6 +722,10 @@
 	suffix = "kilo"
 	name = "kilo exploration shuttle"
 
+/datum/map_template/shuttle/exploration/rad
+	suffix = "rad"
+	name = "rad exploration shuttle"
+
 /datum/map_template/shuttle/labour/delta
 	suffix = "delta"
 	name = "labour shuttle (Delta)"
@@ -693,6 +749,10 @@
 /datum/map_template/shuttle/arrival/pubby
 	suffix = "pubby"
 	name = "arrival shuttle (Pubby)"
+
+/datum/map_template/shuttle/arrival/tiny
+	suffix = "tiny"
+	name = "arrival shuttle (Tiny)"
 
 /datum/map_template/shuttle/arrival/omega
 	suffix = "omega"
@@ -757,14 +817,6 @@
 /datum/map_template/shuttle/snowdin/excavation
 	suffix = "excavation"
 	name = "Snowdin Excavation Elevator"
-
- // Turbolifts
-/datum/map_template/shuttle/turbolift/debug/primary
-	prefix = "_maps/shuttles/turbolifts/"
-	port_id = "debug"
-	suffix = "primary"
-	name = "primary turbolift (multi-z debug)"
-	can_be_bought = FALSE
 
 /datum/map_template/shuttle/tram
 	port_id = "tram"

@@ -3,13 +3,18 @@
 	hitsound_on = 'sound/weapons/blade1.ogg'
 	heat = 3500
 	max_integrity = 200
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 30, "stamina" = 0)
+	armor_type = /datum/armor/transforming_energy
 	resistance_flags = FIRE_PROOF
 	light_system = MOVABLE_LIGHT
 	light_range = 3
 	light_power = 1
 	light_on = FALSE
 	var/sword_color
+
+
+/datum/armor/transforming_energy
+	fire = 100
+	acid = 30
 
 /obj/item/melee/transforming/energy/Initialize(mapload)
 	. = ..()
@@ -20,7 +25,7 @@
 	STOP_PROCESSING(SSobj, src)
 	return ..()
 
-/obj/item/melee/transforming/energy/suicide_act(mob/user)
+/obj/item/melee/transforming/energy/suicide_act(mob/living/user)
 	if(!active)
 		transform_weapon(user, TRUE)
 	user.visible_message("<span class='suicide'>[user] is [pick("slitting [user.p_their()] stomach open with", "falling on")] [src]! It looks like [user.p_theyre()] trying to commit seppuku!</span>")
@@ -60,7 +65,7 @@
 		if(C.wear_mask)
 			in_mouth = ", barely missing [C.p_their()] nose"
 	. = "<span class='warning'>[user] swings [user.p_their()] [name][in_mouth]. [user.p_they(TRUE)] light[user.p_s()] [user.p_their()] [A.name] in the process.</span>"
-	playsound(loc, hitsound, get_clamped_volume(), 1, -1)
+	playsound(loc, hitsound, get_clamped_volume(), TRUE, -1)
 	add_fingerprint(user)
 
 /obj/item/melee/transforming/energy/axe
@@ -80,11 +85,11 @@
 	w_class_on = WEIGHT_CLASS_HUGE
 	flags_1 = CONDUCT_1
 	armour_penetration = 100
-	attack_verb_off = list("attacked", "chopped", "cleaved", "tore", "cut")
+	attack_verb_off = list("attacks", "chops", "cleaves", "tears", "lacerates", "cuts")
 	attack_verb_on = list()
 	light_color = "#40ceff"
 
-/obj/item/melee/transforming/energy/axe/suicide_act(mob/user)
+/obj/item/melee/transforming/energy/axe/suicide_act(mob/living/user)
 	user.visible_message("<span class='suicide'>[user] swings [src] towards [user.p_their()] head! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	return (BRUTELOSS|FIRELOSS)
 
@@ -98,10 +103,11 @@
 	throwforce = 5
 	throwforce_on = 35	//Does a lot of damage on throw, but will embed
 	hitsound = "swing_hit" //it starts deactivated
-	attack_verb_off = list("tapped", "poked")
+	attack_verb_off = list("taps", "pokes")
 	throw_speed = 3
 	throw_range = 5
-	sharpness = IS_SHARP
+	sharpness = SHARP_DISMEMBER_EASY
+	bleed_force_on = BLEED_DEEP_WOUND
 	embedding = list("embed_chance" = 200, "armour_block" = 60, "max_pain_mult" = 15)
 	armour_penetration = 35
 	block_level = 1
@@ -133,8 +139,10 @@
 	righthand_file = 'icons/mob/inhands/equipment/medical_righthand.dmi'
 	sword_color = null //stops icon from breaking when turned on.
 	w_class = WEIGHT_CLASS_NORMAL
-	sharpness = IS_SHARP
+	sharpness = SHARP_DISMEMBER_EASY
+	bleed_force_on = BLEED_DEEP_WOUND
 	light_color = "#40ceff"
+	tool_behaviour = TOOL_SAW
 	toolspeed = 0.7 //faster as a saw
 
 /obj/item/melee/transforming/energy/sword/cyborg
@@ -162,7 +170,8 @@
 	sword_color = null //stops icon from breaking when turned on.
 	hitcost = 75 //Costs more than a standard cyborg esword
 	w_class = WEIGHT_CLASS_NORMAL
-	sharpness = IS_SHARP
+	sharpness = SHARP_DISMEMBER_EASY
+	bleed_force_on = BLEED_DEEP_WOUND
 	light_color = "#40ceff"
 	tool_behaviour = TOOL_SAW
 	toolspeed = 0.7 //faster as a saw
@@ -259,7 +268,8 @@
 	throw_range = 1
 	w_class = WEIGHT_CLASS_BULKY//So you can't hide it in your pocket or some such.
 	var/datum/effect_system/spark_spread/spark_system
-	sharpness = IS_SHARP
+	sharpness = SHARP_DISMEMBER_EASY
+	bleed_force_on = BLEED_DEEP_WOUND
 
 //Most of the other special functions are handled in their own files. aka special snowflake code so kewl
 /obj/item/melee/transforming/energy/blade/Initialize(mapload)

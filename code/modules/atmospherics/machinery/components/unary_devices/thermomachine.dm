@@ -7,7 +7,7 @@
 
 	density = TRUE
 	max_integrity = 300
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 100, "bomb" = 0, "bio" = 100, "rad" = 100, "fire" = 80, "acid" = 30, "stamina" = 0)
+	armor_type = /datum/armor/unary_thermomachine
 	layer = OBJ_LAYER
 	circuit = /obj/item/circuitboard/machine/thermomachine
 
@@ -28,11 +28,18 @@
 	var/base_heating = 140
 	var/base_cooling = 170
 
+
+/datum/armor/unary_thermomachine
+	energy = 100
+	rad = 100
+	fire = 80
+	acid = 30
+
 /obj/machinery/atmospherics/components/unary/thermomachine/Initialize(mapload)
 	. = ..()
 	initialize_directions = dir
 	RefreshParts()
-	update_icon()
+	update_appearance()
 
 /obj/machinery/atmospherics/components/unary/thermomachine/proc/swap_function()
 	cooling = !cooling
@@ -128,10 +135,6 @@
 	else
 		active_power_usage = idle_power_usage
 	return 1
-
-/obj/machinery/atmospherics/components/unary/thermomachine/power_change()
-	..()
-	update_icon()
 
 /obj/machinery/atmospherics/components/unary/thermomachine/attackby(obj/item/I, mob/user, params)
 	if(!on)
@@ -267,3 +270,26 @@
 /obj/machinery/atmospherics/components/unary/thermomachine/heater/on
 	on = TRUE
 	icon_state = "heater_1"
+
+#define QUICK_LAYER_HELPER(PATH)\
+##PATH/layer_1 {\
+	piping_layer = 1;\
+}\
+##PATH/layer_2 {\
+	piping_layer = 2;\
+}\
+##PATH/layer_4 {\
+	piping_layer = 4;\
+}\
+##PATH/layer_5 {\
+	piping_layer = 5;\
+}
+
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/heater)
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/heater/on)
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/on)
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/freezer)
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/freezer/on)
+QUICK_LAYER_HELPER(/obj/machinery/atmospherics/components/unary/thermomachine/freezer/on/coldroom)
+
+#undef QUICK_LAYER_HELPER

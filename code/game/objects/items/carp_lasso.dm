@@ -28,7 +28,7 @@
 
 /obj/item/mob_lasso/proc/init_whitelists()
 	whitelist_mob_cache[type] = typecacheof(list(/mob/living/simple_animal/hostile/carp, /mob/living/simple_animal/hostile/carp/megacarp, /mob/living/simple_animal/hostile/carp/lia,\
-	 /mob/living/simple_animal/cow, /mob/living/simple_animal/hostile/retaliate/dolphin), only_root_path = TRUE)
+	/mob/living/simple_animal/cow, /mob/living/simple_animal/hostile/retaliate/dolphin), only_root_path = TRUE)
 
 /obj/item/mob_lasso/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
 	. = ..()
@@ -53,7 +53,7 @@
 		return
 	if(user.a_intent == INTENT_HELP && C == mob_target) //if trying to tie up previous target
 		to_chat(user, "<span class='notice'>You begin to untie [C]</span>")
-		if(proximity_flag && do_after(user, 2 SECONDS, FALSE, target))
+		if(proximity_flag && do_after(user, 2 SECONDS, target, timed_action_flags = IGNORE_HELD_ITEM))
 			user.faction |= "carpboy_[user]"
 			C.faction = list("neutral")
 			C.faction |= "carpboy_[user]"
@@ -77,29 +77,31 @@
 		to_chat(user, "<span class='warning'>You can't do that right now!</span>")
 		return
 	//Do lasso/beam for style points
-	var/datum/beam/B = new(loc, C, time=1 SECONDS, beam_icon='icons/effects/beam.dmi', beam_icon_state="carp_lasso", btype=/obj/effect/ebeam)
-	INVOKE_ASYNC(B, /datum/beam/.proc/Start)
+	user.Beam(BeamTarget=C,icon_state = "carp_lasso",icon='icons/effects/beam.dmi', time = 1 SECONDS)
 	C.unbuckle_all_mobs()
 	mob_target = C
 	C.throw_at(get_turf(src), 9, 2, user, FALSE, force = 0)
 	C.transform = transform.Turn(180)
 	C.toggle_ai(AI_OFF)
-	RegisterSignal(C, COMSIG_PARENT_QDELETING, .proc/handle_hard_del)
+	RegisterSignal(C, COMSIG_PARENT_QDELETING, PROC_REF(handle_hard_del), override=TRUE)
 	to_chat(user, "<span class='notice'>You lasso [C]!</span>")
-	timer = addtimer(CALLBACK(src, .proc/fail_ally), 6 SECONDS, TIMER_STOPPABLE) //after 6 seconds set the carp back
+	timer = addtimer(CALLBACK(src, PROC_REF(fail_ally)), 6 SECONDS, TIMER_STOPPABLE) //after 6 seconds set the carp back
 
 /obj/item/mob_lasso/proc/check_allowed(atom/target)
 	return ((!whitelist_mobs || is_type_in_typecache(target, whitelist_mobs)) && (!blacklist_mobs || !is_type_in_typecache(target, blacklist_mobs)))
 
 /obj/item/mob_lasso/proc/fail_ally()
+	if(!mob_target)
+		return
 	visible_message("<span class='warning'>[mob_target] breaks free!</span>")
-	mob_target?.transform = transform.Turn(0)
-	mob_target?.toggle_ai(AI_ON)
+	mob_target.transform = transform.Turn(0)
+	mob_target.toggle_ai(AI_ON)
 	UnregisterSignal(mob_target, COMSIG_PARENT_QDELETING)
 	mob_target = null
 	timer = null
 
 /obj/item/mob_lasso/proc/handle_hard_del()
+	SIGNAL_HANDLER
 	mob_target = null
 	timer = null
 

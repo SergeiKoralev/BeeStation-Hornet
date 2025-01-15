@@ -9,10 +9,15 @@
 	/// The uplink flags of the implant uplink inside, only checked during initialisation so modifying it after initialisation will do nothing
 	var/uplink_flag = UPLINK_TRAITORS
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/implant/uplink)
+
 /obj/item/implant/uplink/Initialize(mapload, owner, uplink_flag)
 	. = ..()
-	AddComponent(/datum/component/uplink, _owner = owner, _lockable = TRUE, _enabled = FALSE, uplink_flag = uplink_flag, starting_tc = starting_tc)
-	RegisterSignal(src, COMSIG_COMPONENT_REMOVING, .proc/_component_removal)
+	if(!uplink_flag)
+		uplink_flag = src.uplink_flag
+	var/datum/component/uplink/new_uplink = AddComponent(/datum/component/uplink, _owner = owner, _lockable = TRUE, _enabled = FALSE, uplink_flag = uplink_flag, starting_tc = starting_tc)
+	new_uplink.unlock_text = "Your Syndicate Uplink has been cunningly implanted in you, for a small TC fee. Simply trigger the uplink to access it."
+	RegisterSignal(src, COMSIG_COMPONENT_REMOVING, PROC_REF(_component_removal))
 
 /**
  * Proc called when component is removed; ie. uplink component
@@ -22,12 +27,17 @@
  * the component, so delete itself.
  */
 /obj/item/implant/uplink/proc/_component_removal(datum/source, datum/component/component)
+	SIGNAL_HANDLER
+	if(QDELETED(src))
+		return
 	if(istype(component, /datum/component/uplink))
 		qdel(src)
 
 /obj/item/implanter/uplink
 	name = "implanter (uplink)"
 	imp_type = /obj/item/implant/uplink
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/implanter/uplink)
 
 /obj/item/implanter/uplink/Initialize(mapload, uplink_flag = UPLINK_TRAITORS)
 	imp = new imp_type(src, null, uplink_flag)

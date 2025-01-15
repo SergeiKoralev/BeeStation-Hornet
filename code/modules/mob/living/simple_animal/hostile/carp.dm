@@ -3,6 +3,7 @@
 /mob/living/simple_animal/hostile/carp
 	name = "space carp"
 	desc = "A ferocious, fang-bearing creature that resembles a fish."
+	unique_name = TRUE
 	icon = 'icons/mob/carp.dmi'
 	icon_state = "base"
 	icon_living = "base"
@@ -11,10 +12,11 @@
 	mob_biotypes = list(MOB_ORGANIC, MOB_BEAST)
 	speak_chance = 0
 	turns_per_move = 5
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/carpmeat = 2)
-	response_help = "pets"
-	response_disarm = "gently pushes aside"
-	response_harm = "hits"
+	butcher_results = list(/obj/item/food/fishmeat/carp = 2)
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
+	response_disarm_continuous = "gently pushes aside"
+	response_disarm_simple = "gently push aside"
 	emote_taunt = list("gnashes")
 	taunt_chance = 30
 	speed = 0
@@ -24,7 +26,8 @@
 
 	obj_damage = 50
 	melee_damage = 20
-	attacktext = "bites"
+	attack_verb_continuous = "bites"
+	attack_verb_simple = "bite"
 	attack_sound = 'sound/weapons/bite.ogg'
 	speak_emote = list("gnashes")
 	chat_color = "#B15FB9"
@@ -35,7 +38,8 @@
 	minbodytemp = 0
 	maxbodytemp = 1500
 	faction = list("carp")
-	movement_type = FLYING
+	is_flying_animal = TRUE
+	no_flying_animation = TRUE
 	pressure_resistance = 200
 	gold_core_spawnable = HOSTILE_SPAWN
 
@@ -67,6 +71,7 @@
 	)
 
 /mob/living/simple_animal/hostile/carp/Initialize(mapload)
+	ADD_TRAIT(src, TRAIT_FREE_HYPERSPACE_MOVEMENT, INNATE_TRAIT)
 	if(random_color)
 		set_greyscale(new_config=/datum/greyscale_config/carp)
 		carp_randomify(rarechance)
@@ -105,6 +110,7 @@
 	icon = 'icons/mob/broadMobs.dmi'
 	name = "Mega Space Carp"
 	desc = "A ferocious, fang bearing creature that resembles a shark. This one seems especially ticked off."
+	unique_name = FALSE
 	icon_state = "megacarp"
 	icon_living = "megacarp"
 	icon_dead = "megacarp_dead"
@@ -112,6 +118,7 @@
 	maxHealth = 20
 	health = 20
 	pixel_x = -16
+	base_pixel_x = -16
 	mob_size = MOB_SIZE_LARGE
 	random_color = FALSE
 
@@ -141,9 +148,10 @@
 	name = "Cayenne"
 	desc = "A failed Syndicate experiment in weaponized space carp technology, it now serves as a lovable mascot."
 	gender = FEMALE
+	unique_name = FALSE
 	speak_emote = list("squeaks")
 	gold_core_spawnable = NO_SPAWN
-	faction = list(ROLE_SYNDICATE)
+	faction = list("carp", FACTION_SYNDICATE)
 	AIStatus = AI_OFF
 	/// Keeping track of the nuke disk for the functionality of storing it.
 	var/obj/item/disk/nuclear/disky
@@ -156,7 +164,6 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_DISK_VERIFIER, INNATE_TRAIT) //carp can verify disky
 	ADD_TRAIT(src, TRAIT_CAN_USE_NUKE, INNATE_TRAIT)  //carp SMART
-	colored_disk_mouth = mutable_appearance(SSgreyscale.GetColoredIconByType(/datum/greyscale_config/carp/disk_mouth, greyscale_colors), "disk_mouth")
 
 /mob/living/simple_animal/hostile/carp/cayenne/death(gibbed)
 	if(disky)
@@ -210,6 +217,8 @@
 	. = ..()
 	if(!disky || stat == DEAD)
 		return
+	if (isnull(colored_disk_mouth))
+		colored_disk_mouth = mutable_appearance(SSgreyscale.GetColoredIconByType(/datum/greyscale_config/carp/disk_mouth, greyscale_colors), "disk_mouth")
 	. += colored_disk_mouth
 	. += mutable_appearance(disk_overlay_file, "disk_overlay")
 
@@ -218,6 +227,7 @@
 	real_name = "Lia"
 	desc = "A failed experiment of Nanotrasen to create weaponised carp technology. This less than intimidating carp now serves as the Head of Security's pet."
 	gender = FEMALE
+	unique_name = FALSE
 	speak_emote = list("squeaks")
 	gold_core_spawnable = NO_SPAWN
 	faction = list("neutral")
@@ -232,10 +242,15 @@
 
 /mob/living/simple_animal/hostile/carp/advanced
 	name = "advanced space carp"
-	desc = "A ferocious, fang-bearing creature that resembles a fish. This one seems to be self-aware."
-	maxHealth = 40
-	health = 40
+	desc = "A ferocious, fang-bearing creature that resembles a fish."
+	maxHealth = 80
+	health = 80
 	gold_core_spawnable = NO_SPAWN
-	obj_damage = 15
+	obj_damage = 25
+
+/mob/living/simple_animal/hostile/carp/advanced/examine(mob/user)
+	. = ..()
+	if(mind)
+		. += "<span class='notice'>This one seems to be self-aware.</span>"
 
 #undef REGENERATION_DELAY

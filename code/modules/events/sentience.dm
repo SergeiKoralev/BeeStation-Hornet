@@ -40,7 +40,7 @@ GLOBAL_LIST_INIT(high_priority_sentience, typecacheof(list(
 
 /datum/round_event/ghost_role/sentience/spawn_role()
 	var/list/mob/dead/observer/candidates
-	candidates = get_candidates(ROLE_SENTIENCE, null, ROLE_SENTIENCE)
+	candidates = get_candidates(ROLE_SENTIENT_ANIMAL, null)
 
 	// find our chosen mob to breathe life into
 	// Mobs have to be simple animals, mindless, on station, and NOT holograms.
@@ -82,7 +82,7 @@ GLOBAL_LIST_INIT(high_priority_sentience, typecacheof(list(
 
 		SA.key = SG.key
 
-		SA.grant_all_languages(TRUE, FALSE, FALSE)
+		SA.grant_all_languages(UNDERSTOOD_LANGUAGE, grant_omnitongue = FALSE, source = LANGUAGE_ATOM)
 
 		SA.sentience_act()
 

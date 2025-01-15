@@ -7,6 +7,7 @@
 	use_power = IDLE_POWER_USE
 	can_unwrench = TRUE
 	shift_underlay_only = FALSE
+	hide = TRUE
 
 	resistance_flags = FIRE_PROOF | UNACIDABLE | ACID_PROOF //really helpful in building gas chambers for xenomorphs
 
@@ -18,7 +19,6 @@
 	var/id = null
 	var/datum/radio_frequency/radio_connection
 
-	level = 1
 	interacts_with_air = TRUE
 	layer = GAS_SCRUBBER_LAYER
 
@@ -56,12 +56,6 @@
 		icon_state = "inje_off"
 	else
 		icon_state = "inje_on"
-
-/obj/machinery/atmospherics/components/unary/outlet_injector/power_change()
-	var/old_stat = machine_stat
-	..()
-	if(old_stat != machine_stat)
-		update_icon()
 
 /obj/machinery/atmospherics/components/unary/outlet_injector/process_atmos()
 	..()
@@ -139,9 +133,9 @@
 	if("set_volume_rate" in signal.data)
 		var/number = text2num(signal.data["set_volume_rate"])
 		var/datum/gas_mixture/air_contents = airs[1]
-		volume_rate = CLAMP(number, 0, air_contents.return_volume())
+		volume_rate = clamp(number, 0, air_contents.return_volume())
 
-	addtimer(CALLBACK(src, .proc/broadcast_status), 2)
+	addtimer(CALLBACK(src, PROC_REF(broadcast_status)), 2)
 
 	if(!("status" in signal.data)) //do not update_icon
 		update_icon()
@@ -227,9 +221,9 @@
 /obj/machinery/atmospherics/components/unary/outlet_injector/atmos/engine_waste
 	name = "engine outlet injector"
 	id = ATMOS_GAS_MONITOR_WASTE_ENGINE
-/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/toxin_input
+/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/plasma_input
 	name = "plasma tank input injector"
-	id = ATMOS_GAS_MONITOR_INPUT_TOX
+	id = ATMOS_GAS_MONITOR_INPUT_PLASMA
 /obj/machinery/atmospherics/components/unary/outlet_injector/atmos/oxygen_input
 	name = "oxygen tank input injector"
 	id = ATMOS_GAS_MONITOR_INPUT_O2
@@ -261,3 +255,29 @@
 	name = "supermatter waste input injector"
 	id = ATMOS_GAS_MONITOR_INPUT_SM_WASTE
 
+
+#define LAYER_HELPER(FULLPATH)\
+##FULLPATH/layer2 {\
+	piping_layer = 2;\
+	icon_state = "inje_map-2";\
+}\
+##FULLPATH/layer4 {\
+	piping_layer = 4;\
+	icon_state = "inje_map-4";\
+}
+
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/atmos_waste)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/engine_waste)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/plasma_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/oxygen_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/nitrogen_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/mix_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/nitrous_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/air_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/carbon_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/incinerator_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/toxins_mixing_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/toxins_waste_input)
+LAYER_HELPER(/obj/machinery/atmospherics/components/unary/outlet_injector/atmos/sm_waste_input)
+
+#undef LAYER_HELPER

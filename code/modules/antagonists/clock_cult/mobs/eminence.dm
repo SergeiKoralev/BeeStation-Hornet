@@ -5,7 +5,7 @@
 	icon_state = "eminence"
 	mob_biotypes = list(MOB_SPIRIT)
 	incorporeal_move = INCORPOREAL_MOVE_EMINENCE
-	invisibility = INVISIBILITY_OBSERVER
+	invisibility = INVISIBILITY_SPIRIT
 	health = INFINITY
 	maxHealth = INFINITY
 	plane = GHOST_PLANE
@@ -14,7 +14,7 @@
 	sight = SEE_SELF
 	throwforce = 0
 
-	see_in_dark = 8
+	see_in_dark = NIGHTVISION_FOV_RANGE
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 	unsuitable_atmos_damage = 0
 	damage_coeff = list(BRUTE = 0, BURN = 0, TOX = 0, CLONE = 0, STAMINA = 0, OXY = 0)
@@ -24,7 +24,8 @@
 	status_flags = 0
 	wander = FALSE
 	density = FALSE
-	movement_type = FLYING
+	is_flying_animal = TRUE
+	no_flying_animation = TRUE
 	move_resist = MOVE_FORCE_OVERPOWERING
 	mob_size = MOB_SIZE_TINY
 	pass_flags = PASSTABLE | PASSGRILLE | PASSMOB
@@ -89,7 +90,7 @@
 	trigger_event = new
 	AddSpell(trigger_event)
 	//Wooooo, you are a ghost
-	AddComponent(/datum/component/tracking_beacon, "ghost", null, null, TRUE, "#9e4d91", TRUE, TRUE)
+	AddComponent(/datum/component/tracking_beacon, "ghost", null, null, TRUE, "#9e4d91", TRUE, TRUE, "#490066")
 	internal_radio = new(src)
 	cog_change()
 
@@ -101,6 +102,8 @@
 
 /mob/living/simple_animal/eminence/Login()
 	. = ..()
+	if(!. || !client)
+		return FALSE
 	var/datum/antagonist/servant_of_ratvar/S = add_servant_of_ratvar(src, silent=TRUE)
 	S.prefix = CLOCKCULT_PREFIX_EMINENCE
 	to_chat(src, "<span class='large_brass'>You are the Eminence!</span>")
@@ -125,7 +128,7 @@
 		return
 	. = ..()
 
-/mob/living/simple_animal/eminence/bullet_act(obj/item/projectile/Proj)
+/mob/living/simple_animal/eminence/bullet_act(obj/projectile/Proj)
 	return BULLET_ACT_FORCE_PIERCE
 
 /mob/living/simple_animal/eminence/proc/run_global_event(datum/round_event_control/E)
@@ -138,6 +141,12 @@
 	tab_data["Cogs Available"] = GENERATE_STAT_TEXT("[cogs] Cogs")
 	return tab_data
 
+/mob/living/simple_animal/eminence/med_hud_set_health()
+	return
+
+/mob/living/simple_animal/eminence/med_hud_set_status()
+	return
+
 /mob/living/simple_animal/eminence/update_health_hud()
 	return
 
@@ -148,8 +157,8 @@
 
 /obj/effect/proc_holder/spell/targeted/eminence
 	invocation = "none"
-	invocation_type = "none"
-	action_icon = 'icons/mob/actions/actions_clockcult.dmi'
+	invocation_type = INVOCATION_NONE
+	action_icon = 'icons/hud/actions/actions_clockcult.dmi'
 	action_icon_state = "ratvarian_spear"
 	action_background_icon_state = "bg_clock"
 	clothes_req = FALSE
@@ -277,7 +286,7 @@
 	to_chat(L, "<span class='brass'>The Eminence is summoning you...</span>")
 	L.visible_message("<span class='warning'>[L] flares briefly.</span>")
 	if(do_after(E, 70, target=L))
-		L.visible_message("<span class='warning'>[L] phases out of existance!</span>")
+		L.visible_message("<span class='warning'>[L] phases out of existence!</span>")
 		var/turf/T = get_turf(pick(GLOB.servant_spawns))
 		try_warp_servant(L, T, FALSE)
 		consume_cogs(E)
@@ -318,7 +327,7 @@
 	for(var/datum/round_event_control/E in SSevents.control)
 		if(E.name == picked_event)
 			var/mob/living/simple_animal/eminence/eminence = user
-			INVOKE_ASYNC(eminence, /mob/living/simple_animal/eminence.proc/run_global_event, E)
+			INVOKE_ASYNC(eminence, TYPE_PROC_REF(/mob/living/simple_animal/eminence, run_global_event), E)
 			consume_cogs(user)
 			return
 	revert_cast(user)
@@ -330,4 +339,8 @@
 	canhear_range = 0
 	radio_silent = TRUE
 	prison_radio = TRUE
-	broadcasting = TRUE
+
+
+/obj/item/radio/borg/eminence/Initialize(mapload)
+	. = ..()
+	set_broadcasting(TRUE)

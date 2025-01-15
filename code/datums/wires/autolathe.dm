@@ -27,26 +27,27 @@
 	switch(wire)
 		if(WIRE_HACK)
 			A.adjust_hacked(!A.hacked)
-			addtimer(CALLBACK(A, /obj/machinery/modular_fabricator/autolathe.proc/reset, wire), 60)
+			addtimer(CALLBACK(A, TYPE_PROC_REF(/obj/machinery/modular_fabricator/autolathe, reset), wire), 60)
 		if(WIRE_SHOCK)
 			A.shocked = !A.shocked
-			addtimer(CALLBACK(A, /obj/machinery/modular_fabricator/autolathe.proc/reset, wire), 60)
+			addtimer(CALLBACK(A, TYPE_PROC_REF(/obj/machinery/modular_fabricator/autolathe, reset), wire), 60)
 		if(WIRE_DISABLE)
 			A.disabled = !A.disabled
-			addtimer(CALLBACK(A, /obj/machinery/modular_fabricator/autolathe.proc/reset, wire), 60)
+			addtimer(CALLBACK(A, TYPE_PROC_REF(/obj/machinery/modular_fabricator/autolathe, reset), wire), 60)
 		if(WIRE_ACTIVATE)
 			A.begin_process()
 	ui_update()
 
-/datum/wires/autolathe/on_cut(wire, mend)
+/datum/wires/autolathe/on_cut(wire, mob/user, mend)
 	var/obj/machinery/modular_fabricator/autolathe/A = holder
 	switch(wire)
 		if(WIRE_HACK)
 			A.adjust_hacked(!mend)
-		if(WIRE_HACK)
+		if(WIRE_SHOCK)
 			A.shocked = !mend
 		if(WIRE_DISABLE)
 			A.disabled = !mend
 		if(WIRE_ZAP)
-			A.shock(usr, 50)
+			if (user)
+				A.shock(user, 50)
 	ui_update()

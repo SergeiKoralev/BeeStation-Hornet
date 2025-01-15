@@ -22,8 +22,8 @@
 	id = /obj/item/card/id/syndicate
 	belt = /obj/item/gun/ballistic/automatic/pistol
 	l_pocket = /obj/item/paper/fluff/vr/fluke_ops
-	backpack_contents = list(/obj/item/storage/box/syndie=1,\
-		/obj/item/kitchen/knife/combat/survival)
+	backpack_contents = list(/obj/item/storage/box/survival/syndie=1,\
+		/obj/item/knife/combat/survival)
 
 /datum/outfit/vr/syndicate/post_equip(mob/living/carbon/human/H)
 	. = ..()
@@ -33,9 +33,9 @@
 	W.implant(H)
 	var/obj/item/implant/explosive/E = new/obj/item/implant/explosive(H)
 	E.implant(H)
-	H.faction |= ROLE_SYNDICATE
+	H.faction |= FACTION_SYNDICATE
 	H.update_icons()
 
 /obj/item/paper/fluff/vr/fluke_ops
 	name = "Where is my uplink?"
-	info = "Use the radio in your backpack."
+	default_raw_text = "Use the radio in your backpack."

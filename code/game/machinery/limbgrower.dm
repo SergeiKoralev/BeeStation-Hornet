@@ -57,8 +57,8 @@
 	popup.open()
 
 /obj/machinery/limbgrower/on_deconstruction()
-	for(var/obj/item/reagent_containers/glass/G in component_parts)
-		reagents.trans_to(G, G.reagents.maximum_volume)
+	for(var/obj/item/reagent_containers/cup/our_beaker in component_parts)
+		reagents.trans_to(our_beaker, our_beaker.reagents.maximum_volume)
 	..()
 
 /obj/machinery/limbgrower/attackby(obj/item/O, mob/user, params)
@@ -84,7 +84,10 @@
 			screen = text2num(href_list["menu"])
 
 		if(href_list["category"])
-			selected_category = href_list["category"]
+			var/requested_category = href_list["category"]
+			if (!(requested_category in categories))
+				return
+			selected_category = requested_category
 
 		if(href_list["disposeI"])  //Get rid of a reagent incase you add the wrong one by mistake
 			reagents.del_reagent(text2path(href_list["disposeI"]))
@@ -106,7 +109,7 @@
 				use_power(power)
 				flick("limbgrower_fill",src)
 				icon_state = "limbgrower_idleon"
-				addtimer(CALLBACK(src, .proc/build_item),32*prod_coeff)
+				addtimer(CALLBACK(src, PROC_REF(build_item)),32*prod_coeff)
 
 	else
 		to_chat(usr, "<span class=\"alert\">The limb grower is busy. Please wait for completion of previous operation.</span>")
@@ -152,9 +155,9 @@
 
 /obj/machinery/limbgrower/RefreshParts()
 	reagents.maximum_volume = 0
-	for(var/obj/item/reagent_containers/glass/G in component_parts)
-		reagents.maximum_volume += G.volume
-		G.reagents.trans_to(src, G.reagents.total_volume)
+	for(var/obj/item/reagent_containers/cup/our_beaker in component_parts)
+		reagents.maximum_volume += our_beaker.volume
+		our_beaker.reagents.trans_to(src, our_beaker.reagents.total_volume)
 	var/T=1.2
 	for(var/obj/item/stock_parts/manipulator/M in component_parts)
 		T -= M.rating*0.2
@@ -230,3 +233,7 @@
 		if((D.build_type & LIMBGROWER) && ("emagged" in D.category))
 			stored_research.add_design(D)
 	to_chat(user, "<span class='warning'>A warning flashes onto the screen, stating that safety overrides have been deactivated!</span>")
+
+#undef LIMBGROWER_MAIN_MENU
+#undef LIMBGROWER_CATEGORY_MENU
+#undef LIMBGROWER_CHEMICAL_MENU

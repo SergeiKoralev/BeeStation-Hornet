@@ -158,48 +158,26 @@
 	SELECT = FORCE_NULLS, (D)SKIP_NULLS
 	PRIORITY = HIGH, (D) NORMAL
 	AUTOGC = (D) AUTOGC, KEEP_ALIVE
+	SEQUENTIAL = TRUE - The queries in this batch will be executed sequentially one by one not in parallel
 
 	Example: USING PROCCALL = BLOCKING, SELECT = FORCE_NULLS, PRIORITY = HIGH SELECT /mob FROM world WHERE z == 1
 
 */
 
-
-#define SDQL2_STATE_ERROR 0
-#define SDQL2_STATE_IDLE 1
-#define SDQL2_STATE_PRESEARCH 2
-#define SDQL2_STATE_SEARCHING 3
-#define SDQL2_STATE_EXECUTING 4
-#define SDQL2_STATE_SWITCHING 5
-#define SDQL2_STATE_HALTING 6
-
-#define SDQL2_VALID_OPTION_TYPES list("proccall", "select", "priority", "autogc")
-#define SDQL2_VALID_OPTION_VALUES list("async", "blocking", "force_nulls", "skip_nulls", "high", "normal", "keep_alive")
-
-#define SDQL2_OPTION_SELECT_OUTPUT_SKIP_NULLS			(1<<0)
-#define SDQL2_OPTION_BLOCKING_CALLS						(1<<1)
-#define SDQL2_OPTION_HIGH_PRIORITY						(1<<2)		//High priority SDQL query, allow using almost all of the tick.
-#define SDQL2_OPTION_DO_NOT_AUTOGC						(1<<3)
-
-#define SDQL2_OPTIONS_DEFAULT		(SDQL2_OPTION_SELECT_OUTPUT_SKIP_NULLS)
-
-#define SDQL2_IS_RUNNING (state == SDQL2_STATE_EXECUTING || state == SDQL2_STATE_SEARCHING || state == SDQL2_STATE_SWITCHING || state == SDQL2_STATE_PRESEARCH)
-#define SDQL2_HALT_CHECK if(!SDQL2_IS_RUNNING) {state = SDQL2_STATE_HALTING; return FALSE;};
-
-#define SDQL2_TICK_CHECK ((options & SDQL2_OPTION_HIGH_PRIORITY)? CHECK_TICK_HIGH_PRIORITY : CHECK_TICK)
-
-#define SDQL2_STAGE_SWITCH_CHECK if(state != SDQL2_STATE_SWITCHING){\
-		if(state == SDQL2_STATE_HALTING){\
-			state = SDQL2_STATE_IDLE;\
-			return FALSE}\
-		state = SDQL2_STATE_ERROR;\
-		CRASH("SDQL2 fatal error");};
-
-/client/proc/SDQL2_query(query_text as message)
+/client/proc/SDQL2_query(requested_query as message)
 	set category = "Debug"
 	if(!check_rights(R_DEBUG))  //Shouldn't happen... but just to be safe.
 		message_admins("<span class='danger'>ERROR: Non-admin [key_name(usr)] attempted to execute a SDQL query!</span>")
 		log_admin("Non-admin [key_name(usr)] attempted to execute a SDQL query!")
 		return FALSE
+	var/query_text = requested_query
+	if (query_text)
+		if (alert(src, "Are you sure you want to execute the following query?\n[query_text]", "SDQL Query", "Yes", "No") != "Yes")
+			return
+	else
+		query_text = input("Run SDQL2 query:", "SDQL2", null) as message|null
+		if (!length(query_text))
+			return
 	var/list/results = world.SDQL2_query(query_text, key_name_admin(usr), "[key_name(usr)]")
 	if(length(results) == 3)
 		for(var/I in 1 to 3)
@@ -214,6 +192,7 @@
 	NOTICE(query_log)
 
 	var/start_time_total = REALTIMEOFDAY
+	var/sequential = FALSE
 
 	if(!length(query_text))
 		return
@@ -224,18 +203,36 @@
 	if(!length(querys))
 		return
 	var/list/datum/SDQL2_query/running = list()
+	var/list/datum/SDQL2_query/waiting_queue = list() //Sequential queries queue.
+
 	for(var/list/query_tree in querys)
 		var/datum/SDQL2_query/query = new /datum/SDQL2_query(query_tree)
 		if(QDELETED(query))
 			continue
 		if(usr)
 			query.show_next_to_key = usr.ckey
+		waiting_queue += query
+		//This needs to be done before Run() is used, unlike every other query option, so we're checking it here and we're doing it differently
+		if(query.options && findtext(query_text, "sequential = true"))
+			sequential = TRUE
+
+	if(sequential) //Start first one
+		var/datum/SDQL2_query/query = popleft(waiting_queue)
 		running += query
 		var/msg = "Starting query #[query.id] - [query.get_query_text()]."
 		if(usr)
 			to_chat(usr, "<span class='admin'>[msg]</span>")
 		log_admin(msg)
 		query.ARun()
+	else //Start all
+		for(var/datum/SDQL2_query/query in waiting_queue)
+			running += query
+			var/msg = "Starting query #[query.id] - [query.get_query_text()]."
+			if(usr)
+				to_chat(usr, "<span class='admin'>[msg]</span>")
+			log_admin(msg)
+			query.ARun()
+
 	var/finished = FALSE
 	var/objs_all = 0
 	var/objs_eligible = 0
@@ -251,10 +248,10 @@
 				continue
 			else if(query.state != SDQL2_STATE_IDLE)
 				finished = FALSE
-			else if(query.state == SDQL2_STATE_ERROR)
-				if(usr)
-					to_chat(usr, "<span class='admin'>SDQL query [query.get_query_text()] errored. It will NOT be automatically garbage collected. Please remove manually.</span>")
-				running -= query
+				if(query.state == SDQL2_STATE_ERROR)
+					if(usr)
+						to_chat(usr, "<span class='admin'>SDQL query [query.get_query_text()] errored. It will NOT be automatically garbage collected. Please remove manually.</span>")
+					running -= query
 			else
 				if(query.finished)
 					objs_all += islist(query.obj_count_all)? length(query.obj_count_all) : query.obj_count_all
@@ -264,6 +261,15 @@
 					running -= query
 					if(!CHECK_BITFIELD(query.options, SDQL2_OPTION_DO_NOT_AUTOGC))
 						QDEL_IN(query, 50)
+					if(sequential && waiting_queue.len)
+						finished = FALSE
+						var/datum/SDQL2_query/next_query = popleft(waiting_queue)
+						running += next_query
+						var/msg = "Starting query #[next_query.id] - [next_query.get_query_text()]."
+						if(usr)
+							to_chat(usr, "<span class='admin'>[msg]</span>")
+						log_admin(msg)
+						next_query.ARun()
 				else
 					if(usr)
 						to_chat(usr, "<span class='admin'>SDQL query [query.get_query_text()] was halted. It will NOT be automatically garbage collected. Please remove manually.</span>")
@@ -461,8 +467,9 @@ GLOBAL_LIST_INIT(sdql2_queries, GLOB.sdql2_queries || list())
 				if("keep_alive")
 					ENABLE_BITFIELD(options, SDQL2_OPTION_DO_NOT_AUTOGC)
 
+
 /datum/SDQL2_query/proc/ARun()
-	INVOKE_ASYNC(src, .proc/Run)
+	INVOKE_ASYNC(src, PROC_REF(Run))
 
 /datum/SDQL2_query/proc/Run()
 	if(SDQL2_IS_RUNNING)
@@ -768,7 +775,6 @@ GLOBAL_LIST_INIT(sdql2_queries, GLOB.sdql2_queries || list())
 	for(var/arg in arguments)
 		new_args[++new_args.len] = SDQL_expression(source, arg)
 	if(object == GLOB) // Global proc.
-		procname = "/proc/[procname]"
 		return superuser? (call("/proc/[procname]")(new_args)) : (WrapAdminProcCall(GLOBAL_PROC, procname, new_args))
 	return superuser? (call(object, procname)(new_args)) : (WrapAdminProcCall(object, procname, new_args))
 
@@ -950,8 +956,9 @@ GLOBAL_LIST_INIT(sdql2_queries, GLOB.sdql2_queries || list())
 /proc/SDQL_testout(list/query_tree, indent = 0)
 	var/static/whitespace = "&nbsp;&nbsp;&nbsp; "
 	var/spaces = ""
-	for(var/s = 0, s < indent, s++)
-		spaces += whitespace
+	if(indent > 0)
+		for(var/i in 1 to indent)
+			spaces += whitespace
 
 	for(var/item in query_tree)
 		if(istype(item, /list))
@@ -986,7 +993,7 @@ GLOBAL_LIST_INIT(sdql2_queries, GLOB.sdql2_queries || list())
 		return null
 
 	else if(expression [start] == "{" && long)
-		if(lowertext(copytext(expression[start + 1], 1, 3)) != "0x") //3 == length("0x") + 1
+		if(LOWER_TEXT(copytext(expression[start + 1], 1, 3)) != "0x") //3 == length("0x") + 1
 			to_chat(usr, "<span class='danger'>Invalid pointer syntax: [expression[start + 1]]</span>")
 			return null
 		v = locate("\[[expression[start + 1]]]")
@@ -1174,3 +1181,5 @@ GLOBAL_LIST_INIT(sdql2_queries, GLOB.sdql2_queries || list())
 	for(var/datum/SDQL2_query/query as anything in GLOB.sdql2_queries)
 		if(query.id == id)
 			return query
+
+#undef SDQL_qdel_datum

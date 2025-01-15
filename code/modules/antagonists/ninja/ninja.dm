@@ -1,7 +1,7 @@
 /datum/antagonist/ninja
 	name = "Ninja"
 	antagpanel_category = "Ninja"
-	job_rank = ROLE_NINJA
+	banning_key = ROLE_NINJA
 	show_name_in_check_antagonists = TRUE
 	show_to_ghosts = TRUE
 	antag_moodlet = /datum/mood_event/focused
@@ -37,7 +37,7 @@
 			if(ishuman(M.current))
 				if(M.special_role)
 					possible_targets[M] = 0						//bad-guy
-				else if(M.assigned_role in GLOB.command_positions)
+				else if(M.assigned_role in SSdepartment.get_jobs_by_dept_id(DEPT_NAME_COMMAND))
 					possible_targets[M] = 1						//good-guy
 
 	var/list/possible_objectives = list(1,2,3,4)

@@ -10,11 +10,11 @@ RSF
 	icon_state = "rcd"
 	lefthand_file = 'icons/mob/inhands/equipment/tools_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/tools_righthand.dmi'
-	opacity = 0
+	opacity = FALSE
 	density = FALSE
 	anchored = FALSE
 	item_flags = NOBLUDGEON
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 0, "acid" = 0, "stamina" = 0)
+	armor_type = /datum/armor/none
 	var/matter = 0
 	var/mode = 1
 	w_class = WEIGHT_CLASS_NORMAL
@@ -89,7 +89,7 @@ RSF
 	switch(mode)
 		if(1)
 			to_chat(user, "Dispensing Drinking Glass...")
-			new /obj/item/reagent_containers/food/drinks/drinkingglass(T)
+			new /obj/item/reagent_containers/cup/glass/drinkingglass(T)
 			use_matter(20, user)
 		if(2)
 			to_chat(user, "Dispensing Paper Sheet...")
@@ -187,7 +187,7 @@ RSF
 	var/turf/T = get_turf(A)
 	playsound(src.loc, 'sound/machines/click.ogg', 10, 1)
 	to_chat(user, "Fabricating Cookie..")
-	var/obj/item/reagent_containers/food/snacks/cookie/S = new /obj/item/reagent_containers/food/snacks/cookie(T)
+	var/obj/item/food/cookie/S = new /obj/item/food/cookie(T)
 	if(toxin)
 		S.reagents.add_reagent(/datum/reagent/toxin/chloralhydrate, 10)
 	if (iscyborg(user))

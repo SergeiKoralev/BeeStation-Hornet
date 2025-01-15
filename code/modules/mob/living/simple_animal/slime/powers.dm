@@ -3,7 +3,7 @@
 
 /datum/action/innate/slime
 	check_flags = AB_CHECK_CONSCIOUS
-	icon_icon = 'icons/mob/actions/actions_slime.dmi'
+	icon_icon = 'icons/hud/actions/actions_slime.dmi'
 	background_icon_state = "bg_alien"
 	var/needs_growth = NO_GROWTH_NEEDED
 
@@ -28,7 +28,7 @@
 		if(Adjacent(C))
 			choices += C
 
-	var/mob/living/M = input(src,"Who do you wish to feed on?") in null|sortNames(choices)
+	var/mob/living/M = input(src,"Who do you wish to feed on?") in null|sort_names(choices)
 	if(!M)
 		return 0
 	if(CanFeedon(M))
@@ -244,7 +244,7 @@
 		M.maxHealth = round(M.maxHealth * 1.3)
 		M.health = M.maxHealth
 	if(transformeffects & SLIME_EFFECT_PINK)
-		M.grant_language(/datum/language/common, TRUE, TRUE)
+		M.grant_language(/datum/language/common)
 		var/datum/language_holder/LH = M.get_language_holder()
 		LH.selected_language = /datum/language/common
 	if(transformeffects & SLIME_EFFECT_BLUESPACE)
@@ -261,7 +261,7 @@
 	SSblackbox.record_feedback("tally", "slime_babies_born", 1, M.colour)
 	if(original_nanites)
 		M.AddComponent(/datum/component/nanites, original_nanites.nanite_volume*0.25)
-		SEND_SIGNAL(M, COMSIG_NANITE_SYNC, original_nanites, TRUE, TRUE) //The trues are to copy activation as well
+		SEND_SIGNAL(M, COMSIG_NANITE_SYNC, original_nanites, TRUE, TRUE, TRUE) //The trues are to copy activation as well
 	return M
 
 /mob/living/simple_animal/slime/proc/teleport()
@@ -277,3 +277,6 @@
 	var/power = rand(1,powerlevel)
 	do_teleport(src, get_turf(src), power, asoundin = 'sound/effects/phasein.ogg', channel = TELEPORT_CHANNEL_BLUESPACE)
 	powerlevel -= power
+
+#undef NO_GROWTH_NEEDED
+#undef GROWTH_NEEDED

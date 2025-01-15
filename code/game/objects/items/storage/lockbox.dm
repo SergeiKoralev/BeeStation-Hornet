@@ -1,6 +1,7 @@
 /obj/item/storage/lockbox
 	name = "lockbox"
 	desc = "A locked box."
+	icon = 'icons/obj/storage/case.dmi'
 	icon_state = "lockbox+l"
 	item_state = "lockbox+l"
 	lefthand_file = 'icons/mob/inhands/equipment/case_lefthand.dmi'
@@ -93,7 +94,7 @@
 	STR.max_w_class = WEIGHT_CLASS_SMALL
 	STR.max_items = 10
 	STR.max_combined_w_class = 20
-	STR.can_hold = typecacheof(list(/obj/item/clothing/accessory/medal))
+	STR.set_holdable(list(/obj/item/clothing/accessory/medal))
 
 /obj/item/storage/lockbox/medal/examine(mob/user)
 	. = ..()
@@ -117,13 +118,11 @@
 	for(var/i in 1 to 3)
 		new /obj/item/clothing/accessory/medal/conduct(src)
 
-/obj/item/storage/lockbox/medal/update_icon()
-	cut_overlays()
+/obj/item/storage/lockbox/medal/update_icon_state()
 	var/locked = SEND_SIGNAL(src, COMSIG_IS_STORAGE_LOCKED)
 	if(locked)
 		icon_state = "[base_icon_state]+l"
 		item_state = "[base_icon_state]+l"
-		open = FALSE
 	else
 		icon_state = "[base_icon_state]"
 		item_state = "[base_icon_state]"
@@ -132,16 +131,24 @@
 		if(broken)
 			icon_state += "+b"
 			item_state = "[base_icon_state]+b"
-		if(contents && open)
-			for (var/i in 1 to contents.len)
-				var/obj/item/clothing/accessory/medal/M = contents[i]
-				var/mutable_appearance/medalicon = mutable_appearance(initial(icon), M.medaltype)
-				if(i > 1 && i <= 5)
-					medalicon.pixel_x += ((i-1)*4)
-				else if(i > 5)
-					medalicon.pixel_y -= 7
-					medalicon.pixel_x += ((i-6)*4)
-				add_overlay(medalicon)
+	return ..()
+
+/obj/item/storage/lockbox/medal/update_overlays()
+	. = ..()
+	if(!contents || !open)
+		return
+	var/locked = SEND_SIGNAL(src, COMSIG_IS_STORAGE_LOCKED)
+	if(locked)
+		return
+	for (var/i in 1 to contents.len)
+		var/obj/item/clothing/accessory/medal/M = contents[i]
+		var/mutable_appearance/medalicon = mutable_appearance(initial(icon), M.medaltype)
+		if(i > 1 && i <= 5)
+			medalicon.pixel_x += ((i-1)*4)
+		else if(i > 5)
+			medalicon.pixel_y -= 7
+			medalicon.pixel_x += ((i-6)*4)
+		. += medalicon
 
 /obj/item/storage/lockbox/medal/sec
 	name = "security medal box"

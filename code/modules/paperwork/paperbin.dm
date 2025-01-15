@@ -85,8 +85,9 @@
 			P = new papertype(src)
 			if(SSevents.holidays && SSevents.holidays[APRIL_FOOLS])
 				if(prob(30))
-					P.info = "<font face=\"[CRAYON_FONT]\" color=\"red\"><b>HONK HONK HONK HONK HONK HONK HONK<br>HOOOOOOOOOOOOOOOOOOOOOONK<br>APRIL FOOLS</b></font>"
+					P.add_raw_text("<font face=\"[CRAYON_FONT]\" color=\"red\"><b>HONK HONK HONK HONK HONK HONK HONK<br>HOOOOOOOOOOOOOOOOOOOOOONK<br>APRIL FOOLS</b></font>")
 					P.AddComponent(/datum/component/honkspam)
+					P.update_appearance()
 
 		P.add_fingerprint(user)
 		P.forceMove(user.loc)
@@ -145,6 +146,10 @@
 	icon_state = "paper_bundle"
 	papertype = /obj/item/paper/natural
 	resistance_flags = FLAMMABLE
+
+/obj/item/paper_bin/bundlenatural/examine()
+	. = ..()
+	. += "<span class='notice'>You can cut the cord on this with a sharp implement, freeing all 30 sheets at once.</span>"
 
 /obj/item/paper_bin/bundlenatural/attack_hand(mob/user)
 	..()

@@ -9,9 +9,8 @@ Everything else should be handled for you. Good luck soldier.
 
 #define COMSIG_AUTOFIRE_END "stop_autofiring"
 
-/obj/item/gun
-	var/full_auto = FALSE //Set this if your gun uses full auto. ONLY guns that go brr should use this. Not pistols!
-	var/datum/component/full_auto/autofire_component = null //Repeated calls to getComponent aren't really ideal. So we'll take the memory hit instead.
+/obj/item/gun/var/full_auto = FALSE //Set this if your gun uses full auto. ONLY guns that go brr should use this. Not pistols!
+/obj/item/gun/var/datum/component/full_auto/autofire_component = null //Repeated calls to getComponent aren't really ideal. So we'll take the memory hit instead.
 
 /obj/item/gun/vv_edit_var(var_name, var_value)
 	. = ..()
@@ -50,8 +49,8 @@ Everything else should be handled for you. Good luck soldier.
 	. = ..()
 	if(!istype(parent, /obj/item/gun)) //Needs at least this base prototype.
 		return COMPONENT_INCOMPATIBLE
-	RegisterSignal(parent, COMSIG_AUTOFIRE_END, .proc/unset_target) //Called when they mouse up on their gun.
-	RegisterSignal(parent, COMSIG_ITEM_DROPPED, .proc/unset_target) //If you unequip your weapon
+	RegisterSignal(parent, COMSIG_AUTOFIRE_END, PROC_REF(unset_target)) //Called when they mouse up on their gun.
+	RegisterSignal(parent, COMSIG_ITEM_DROPPED, PROC_REF(unset_target)) //If you unequip your weapon
 
 /datum/component/full_auto/proc/set_target(atom/target)
 	//Preconditions: Parent has prototype "gun", the gun stand user is a living mob.
@@ -96,7 +95,7 @@ Everything else should be handled for you. Good luck soldier.
 	if(L.Adjacent(autofire_target)) //Melee attack? Or ranged attack?
 		if(isobj(autofire_target))
 			next_process = world.time + CLICK_CD_MELEE
-			G.attack_obj(autofire_target, L)
+			G.attack_atom(autofire_target, L)
 			return
 		else if(isliving(autofire_target) && L.a_intent == INTENT_HARM) // Prevents trying to attack turfs next to the shooter
 			G.attack(autofire_target, L)
@@ -115,7 +114,7 @@ Everything else should be handled for you. Good luck soldier.
 /obj/item/gun/onMouseDown(object, location, params)
 	. = ..()
 	var/modifiers = params2list(params)
-	if(modifiers["middle"] || modifiers["shift"] || modifiers["ctrl"] || modifiers["alt"]) // Only shoot if we're not trying to do something else
+	if(LAZYACCESS(modifiers, MIDDLE_CLICK) || LAZYACCESS(modifiers, SHIFT_CLICK) || LAZYACCESS(modifiers, CTRL_CLICK) || LAZYACCESS(modifiers, ALT_CLICK)) // Only shoot if we're not trying to do something else
 		return FALSE
 	if(burst_size <= 1) //Don't let them autofire with bursts. That would just be awful.
 		autofire_component?.set_target(object)
@@ -124,3 +123,5 @@ Everything else should be handled for you. Good luck soldier.
 	. = ..()
 	if(burst_size <= 1) //Don't let them autofire with bursts. That would just be awful.
 		autofire_component?.set_target(over_object)
+
+#undef COMSIG_AUTOFIRE_END

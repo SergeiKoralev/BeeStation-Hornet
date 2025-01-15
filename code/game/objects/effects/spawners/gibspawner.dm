@@ -9,6 +9,8 @@
 	var/list/gibamounts = list() //amount to spawn for each gib decal type we'll spawn.
 	var/list/gibdirections = list() //of lists of possible directions to spread each gib decal type towards.
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/effect/gibspawner)
+
 /obj/effect/gibspawner/Initialize(mapload, mob/living/source_mob, list/datum/disease/diseases)
 	. = ..()
 
@@ -41,9 +43,9 @@
 		dna_to_add = list("Non-human DNA" = random_blood_type()) //else, generate a random bloodtype for it.
 
 
-	for(var/i = 1, i<= gibtypes.len, i++)
+	for(var/i in 1 to gibtypes.len)
 		if(gibamounts[i])
-			for(var/j = 1, j<= gibamounts[i], j++)
+			for(var/j in 1 to gibamounts[i])
 				var/gibType = gibtypes[i]
 				gib = new gibType(loc, diseases)
 

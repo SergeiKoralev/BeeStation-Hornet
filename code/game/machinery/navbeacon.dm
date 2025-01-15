@@ -7,10 +7,9 @@
 	icon_state = "navbeacon0-f"
 	name = "navigation beacon"
 	desc = "A radio beacon used for bot navigation."
-	level = 1		// underfloor
 	layer = UNDER_CATWALK
 	max_integrity = 500
-	armor = list("melee" = 70, "bullet" = 70, "laser" = 70, "energy" = 70, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 80, "acid" = 80, "stamina" = 0)
+	armor_type = /datum/armor/machinery_navbeacon
 
 	var/open = FALSE		// true if cover is open
 	var/locked = TRUE		// true if controls are locked
@@ -21,13 +20,22 @@
 
 	req_one_access = list(ACCESS_ENGINE, ACCESS_ROBOTICS)
 
+
+/datum/armor/machinery_navbeacon
+	melee = 70
+	bullet = 70
+	laser = 70
+	energy = 70
+	fire = 80
+	acid = 80
+
 /obj/machinery/navbeacon/Initialize(mapload)
 	. = ..()
 
 	set_codes()
 
-	var/turf/T = loc
-	hide(T.intact)
+	AddElement(/datum/element/undertile, TRAIT_T_RAY_VISIBLE)
+
 	if(codes?["patrol"])
 		if(!GLOB.navbeacons["[z]"])
 			GLOB.navbeacons["[z]"] = list()
@@ -67,27 +75,14 @@
 		else
 			codes[e] = "1"
 
-
-// called when turf state changes
-// hide the object if turf is intact
-/obj/machinery/navbeacon/hide(intact)
-	invisibility = intact ? INVISIBILITY_MAXIMUM : 0
-	update_icon()
-
 // update the icon_state
 /obj/machinery/navbeacon/update_icon()
-	var/state="navbeacon[open]"
-
-	if(invisibility)
-		icon_state = "[state]-f"	// if invisible, set icon to faded version
-									// in case revealed by T-scanner
-	else
-		icon_state = "[state]"
+	icon_state = "navbeacon[open]"
 
 /obj/machinery/navbeacon/attackby(obj/item/I, mob/user, params)
 	var/turf/T = loc
-	if(T.intact)
-		return		// prevent intraction when T-scanner revealed
+	if(T.underfloor_accessibility < UNDERFLOOR_INTERACTABLE)
+		return // prevent interaction when T-scanner revealed
 
 	if(I.tool_behaviour == TOOL_SCREWDRIVER)
 		open = !open
@@ -109,7 +104,7 @@
 	else
 		return ..()
 
-/obj/machinery/navbeacon/attack_ai(mob/user)
+/obj/machinery/navbeacon/attack_silicon(mob/user)
 	interact(user, 1)
 
 /obj/machinery/navbeacon/attack_paw()
@@ -119,7 +114,7 @@
 	. = ..()
 	var/ai = isAI(user)
 	var/turf/T = loc
-	if(T.intact)
+	if(T.underfloor_accessibility < UNDERFLOOR_INTERACTABLE)
 		return		// prevent intraction when T-scanner revealed
 
 	if(!open && !ai)	// can't alter controls if not open, unless you're an AI

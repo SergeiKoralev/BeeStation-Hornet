@@ -7,7 +7,7 @@
 
 	///what we give to connect_loc by default, makes slippable mobs moving over us slip
 	var/static/list/default_connections = list(
-		COMSIG_ATOM_ENTERED = .proc/Slip,
+		COMSIG_ATOM_ENTERED = PROC_REF(Slip),
 	)
 
 	/// The connect_loc_behalf component for the holder_connections list.
@@ -22,7 +22,7 @@
 	callback = _callback
 	add_connect_loc_behalf_to_parent()
 
-	RegisterSignal(parent, COMSIG_ATOM_ENTERED, .proc/Slip)
+	RegisterSignal(parent, COMSIG_ATOM_ENTERED, PROC_REF(Slip))
 
 /datum/component/slippery/proc/add_connect_loc_behalf_to_parent()
 	if(ismovable(parent))
@@ -34,7 +34,7 @@
 	if(!isliving(arrived))
 		return
 	var/mob/living/victim = arrived
-	if(!(victim.movement_type & FLYING) && victim.slip(knockdown_time, parent, lube_flags, paralyze_time, force_drop_items) && callback)
+	if(!(victim.movement_type & MOVETYPES_NOT_TOUCHING_GROUND) && victim.slip(knockdown_time, parent, lube_flags, paralyze_time, force_drop_items) && callback)
 		callback.Invoke(victim)
 
 /datum/component/slippery/UnregisterFromParent()

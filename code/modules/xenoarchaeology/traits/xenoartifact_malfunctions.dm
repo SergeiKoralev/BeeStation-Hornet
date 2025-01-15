@@ -16,7 +16,7 @@
 	var/mob/living/simple_animal/hostile/bear/malnourished/new_bear = new(T)
 	new_bear.name = pick("Freddy", "Bearington", "Smokey", "Beorn", "Pooh", "Winnie", "Baloo", "Rupert", "Yogi", "Fozzie", "Boo") //Why not?
 	bears += new_bear
-	RegisterSignal(new_bear, COMSIG_MOB_DEATH, .proc/handle_death)
+	RegisterSignal(new_bear, COMSIG_MOB_DEATH, PROC_REF(handle_death))
 	log_game("[X] spawned a (/mob/living/simple_animal/hostile/bear/malnourished) at [world.time]. [X] located at [AREACOORD(X)]")
 	X.cooldown += 20 SECONDS
 
@@ -122,7 +122,7 @@
 	for(var/atom/AT in loc)
 		if(!QDELETED(AT) && AT != src) // It's possible that the item is deleted in temperature_expose
 			AT.fire_act(400, 50) //should be average enough to not do too much damage
-	addtimer(CALLBACK(src, .proc/after_burn), 0.3 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(after_burn)), 0.3 SECONDS)
 
 /obj/effect/safe_fire/proc/after_burn()
 	qdel(src)
@@ -166,7 +166,7 @@
 		return
 	//Twin setup
 	var/mob/living/simple_animal/hostile/twin/T = new(get_turf(X))
-	//Setup appearence for evil twin
+	//Setup appearance for evil twin
 	T.name = target.name
 	T.appearance = target.appearance
 	if(istype(target) && length(target.vis_contents))
@@ -177,7 +177,7 @@
 	T.color = COLOR_BLUE
 	//Handle limit and hardel
 	clones += T
-	RegisterSignal(T, COMSIG_PARENT_QDELETING, .proc/handle_death)
+	RegisterSignal(T, COMSIG_PARENT_QDELETING, PROC_REF(handle_death))
 
 /datum/xenoartifact_trait/malfunction/twin/proc/handle_death(datum/source)
 	clones -= source
@@ -189,14 +189,12 @@
 	mob_biotypes = list(MOB_ORGANIC, MOB_HUMANOID)
 	speak_chance = 0
 	turns_per_move = 5
-	response_help = "pokes"
-	response_disarm = "shoves"
-	response_harm = "hits"
 	speed = 0
 	maxHealth = 10
 	health = 10
 	melee_damage = 5
-	attacktext = "punches"
+	attack_verb_continuous = "punches"
+	attack_verb_simple = "punch"
 	attack_sound = 'sound/weapons/punch1.ogg'
 	a_intent = INTENT_HARM
 	atmos_requirements = list("min_oxy" = 5, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 1, "min_co2" = 0, "max_co2" = 5, "min_n2" = 0, "max_n2" = 0)
@@ -204,7 +202,7 @@
 	faction = list("evil_clone")
 	status_flags = CANPUSH
 	del_on_death = TRUE
-	do_footstep = TRUE
+	footstep_type = FOOTSTEP_MOB_SHOE
 	mobchatspan = "syndmob"
 
 //============
@@ -219,7 +217,7 @@
 	. = ..()
 	X.visible_message("<span class='warning'>The [X] begins to heat up, it's delaminating!</span>")
 	apply_wibbly_filters(X, 3)
-	addtimer(CALLBACK(src, .proc/explode, X), 10 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(explode), X), 10 SECONDS)
 
 /datum/xenoartifact_trait/malfunction/explode/proc/explode(obj/item/xenoartifact/X)
 	SSexplosions.explode(X, 0, 1, 2, 1)

@@ -9,7 +9,7 @@
 	name = "shuttle thruster"
 	desc = "A thruster for shuttles."
 	density = TRUE
-	obj_integrity = 250
+	z_flags = Z_BLOCK_IN_DOWN | Z_BLOCK_IN_UP
 	max_integrity = 250
 	icon = 'icons/turf/shuttle.dmi'
 	icon_state = "burst_plasma"
@@ -110,7 +110,7 @@
 		thruster_active = FALSE
 		icon_state = icon_state_off
 
-//Thanks to spaceheater.dm for inspiration :)
+//Thanks to portable_thermomachine.dm for inspiration :)
 /obj/machinery/shuttle/engine/proc/fireEngine()
 	var/turf/heatTurf = loc
 	if(!heatTurf)
@@ -137,3 +137,6 @@
 	if(default_deconstruction_crowbar(I))
 		return
 	return ..()
+
+#undef ENGINE_HEAT_TARGET
+#undef ENGINE_HEATING_POWER

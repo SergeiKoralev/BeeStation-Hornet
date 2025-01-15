@@ -163,7 +163,7 @@
 
 	return master
 
-/datum/reagents/proc/trans_to(obj/target, amount = 1, multiplier = 1, preserve_data = TRUE, no_react = FALSE, mob/transfered_by, remove_blacklisted = FALSE, methods = NONE, show_message = TRUE, round_robin = FALSE)
+/datum/reagents/proc/trans_to(obj/target, amount = 1, multiplier = 1, preserve_data = TRUE, no_react = FALSE, mob/transfered_by, remove_blacklisted = FALSE, method = null, show_message = TRUE, round_robin = FALSE)
 	//if preserve_data=0, the reagents data will be lost. Usefull if you use data for some strange stuff and don't want it to be transferred.
 	//if round_robin=TRUE, so transfer 5 from 15 water, 15 sugar and 15 plasma becomes 10, 15, 15 instead of 13.3333, 13.3333 13.3333. Good if you hate floating point errors
 	var/list/cached_reagents = reagent_list
@@ -199,10 +199,11 @@
 			var/transfer_amount = T.volume * part
 			if(preserve_data)
 				trans_data = copy_data(T)
-			R.add_reagent(T.type, transfer_amount * multiplier, trans_data, chem_temp, no_react = 1) //we only handle reaction after every reagent has been transfered.
-			if(methods)
-				R.expose_single(T, target_atom, methods, part, show_message)
-				T.on_transfer(target_atom, methods, transfer_amount * multiplier)
+			if(!R.add_reagent(T.type, transfer_amount * multiplier, trans_data, chem_temp, no_react = TRUE)) //we only handle reaction after every reagent has been transfered.
+				continue
+			if(method)
+				R.react_single(T, target_atom, method, part, show_message)
+				T.on_transfer(target_atom, method, transfer_amount * multiplier)
 			remove_reagent(T.type, transfer_amount)
 			transfer_log[T.type] = transfer_amount
 	else
@@ -218,11 +219,12 @@
 			var/transfer_amount = amount
 			if(amount > T.volume)
 				transfer_amount = T.volume
-			R.add_reagent(T.type, transfer_amount * multiplier, trans_data, chem_temp, no_react = 1)
+			if(!R.add_reagent(T.type, transfer_amount * multiplier, trans_data, chem_temp, no_react = TRUE)) //we only handle reaction after every reagent has been transfered.
+				continue
 			to_transfer = max(to_transfer - transfer_amount , 0)
-			if(methods)
-				R.expose_single(T, target_atom, methods, transfer_amount, show_message)
-				T.on_transfer(target_atom, methods, transfer_amount * multiplier)
+			if(method)
+				R.react_single(T, target_atom, method, transfer_amount, show_message)
+				T.on_transfer(target_atom, method, transfer_amount * multiplier)
 			remove_reagent(T.type, transfer_amount)
 			transfer_log[T.type] = transfer_amount
 
@@ -267,6 +269,22 @@
 	R.handle_reactions()
 	src.handle_reactions()
 	return amount
+
+///Multiplies the reagents inside this holder by a specific amount
+/datum/reagents/proc/multiply_reagents(multiplier=1)
+	var/list/cached_reagents = reagent_list
+	if(!total_volume)
+		return
+	var/change = (multiplier - 1) //Get the % change
+	for(var/reagent in cached_reagents)
+		var/datum/reagent/T = reagent
+		if(change > 0)
+			add_reagent(T.type, T.volume * change)
+		else
+			remove_reagent(T.type, abs(T.volume * change)) //absolute value to prevent a double negative situation (removing -50% would be adding 50%)
+
+	update_total()
+	handle_reactions()
 
 /datum/reagents/proc/trans_id_to(obj/target, reagent, amount=1, preserve_data=1)//Not sure why this proc didn't exist before. It does now! /N
 	var/list/cached_reagents = reagent_list
@@ -362,7 +380,6 @@
 		addiction_tick++
 	if(C && need_mob_update) //some of the metabolized reagents had effects on the mob that requires some updates.
 		C.updatehealth()
-		C.update_mobility()
 		C.update_stamina()
 	update_total()
 
@@ -451,6 +468,9 @@
 
 						if(M.Uses > 0) // added a limit to slime cores -- Muskets requested this
 							matching_other = 1
+
+					else if(C.check_other()) //if a recipe has required_other, call this proc to see if it meets requirements
+						matching_other = 1
 				else
 					if(!C.required_container)
 						matching_container = 1
@@ -460,7 +480,7 @@
 				if(required_temp == 0 || (is_cold_recipe && chem_temp <= required_temp) || (!is_cold_recipe && chem_temp >= required_temp))
 					meets_temp_requirement = 1
 
-				if(total_matching_reagents == total_required_reagents && total_matching_catalysts == total_required_catalysts && matching_container && matching_other && meets_temp_requirement)
+				if(total_matching_reagents == total_required_reagents && total_matching_catalysts == total_required_catalysts && matching_container && matching_other && meets_temp_requirement && C.can_react(src))
 					possible_reactions  += C
 
 		if(possible_reactions.len)
@@ -584,42 +604,37 @@
 			can_process = TRUE
 	return can_process
 
-/**
-  * Applies the relevant expose_ proc for every reagent in this holder
-  * * [/datum/reagent/proc/expose_mob]
-  * * [/datum/reagent/proc/expose_turf]
-  * * [/datum/reagent/proc/expose_obj]
-  */
-/datum/reagents/proc/expose(atom/A, methods = TOUCH, volume_modifier = 1, show_message = 1)
-	if(isnull(A))
-		return null
-
+/datum/reagents/proc/reaction(atom/A, method = TOUCH, volume_modifier = 1, show_message = 1, obj/item/bodypart/affecting)
+	var/react_type
+	if(isliving(A))
+		react_type = "LIVING"
+		if(method == INGEST)
+			var/mob/living/L = A
+			L.taste(src)
+	else if(isturf(A))
+		react_type = "TURF"
+	else if(isobj(A))
+		react_type = "OBJ"
+	else
+		return
 	var/list/cached_reagents = reagent_list
-	if(!cached_reagents.len)
-		return null
-
-	var/list/reagents = list()
 	for(var/reagent in cached_reagents)
 		var/datum/reagent/R = reagent
-		reagents[R] = R.volume * volume_modifier
+		switch(react_type)
+			if("LIVING")
+				var/check = reaction_check(A, R)
+				if(!check)
+					continue
+				var/touch_protection = 0
+				if(method == VAPOR)
+					var/mob/living/L = A
+					touch_protection = L.getarmor(null, BIO) * 0.01
+				R.reaction_mob(A, method, R.volume * volume_modifier, show_message, touch_protection, affecting)
+			if("TURF")
+				R.reaction_turf(A, R.volume * volume_modifier, show_message)
+			if("OBJ")
+				R.reaction_obj(A, R.volume * volume_modifier, show_message)
 
-	return A.expose_reagents(reagents, src, methods, volume_modifier, show_message)
-
-
-/// Same as [/datum/reagents/proc/expose] but only for one reagent
-/datum/reagents/proc/expose_single(datum/reagent/R, atom/A, methods = TOUCH, volume_modifier = 1, show_message = TRUE)
-	if(isnull(A))
-		return null
-
-	if(ispath(R))
-		R = get_reagent(R)
-	if(isnull(R))
-		return null
-
-	// Yes, we need the parentheses.
-	return A.expose_reagents(list((R) = R.volume * volume_modifier), src, methods, volume_modifier, show_message)
-
-/// is this holder full or not
 /datum/reagents/proc/holder_full()
 	if(total_volume >= maximum_volume)
 		return TRUE
@@ -636,13 +651,16 @@
 
 /datum/reagents/proc/adjust_thermal_energy(J, min_temp = 2.7, max_temp = 1000)
 	var/S = specific_heat()
-	chem_temp = CLAMP(chem_temp + (J / (S * total_volume)), 2.7, 1000)
+	chem_temp = clamp(chem_temp + (J / (S * total_volume)), 2.7, 1000)
 
 /datum/reagents/proc/add_reagent(reagent, amount, list/data=null, reagtemp = 300, no_react = 0)
 	if(!isnum_safe(amount) || !amount)
 		return FALSE
 
 	if(amount <= 0)
+		return FALSE
+
+	if(SEND_SIGNAL(src, COMSIG_REAGENTS_PRE_ADD_REAGENT, reagent, amount, reagtemp, data, no_react) & COMPONENT_CANCEL_REAGENT_ADD)
 		return FALSE
 
 	var/datum/reagent/D = GLOB.chemical_reagents_list[reagent]
@@ -690,9 +708,7 @@
 	cached_reagents += R
 	R.holder = src
 	R.volume = amount
-	if(data)
-		R.data = data
-		R.on_new(data)
+	R.on_new(data)
 
 	if(isliving(my_atom))
 		R.on_mob_add(my_atom) //Must occur befor it could posibly run on_mob_delete
@@ -727,7 +743,7 @@
 		if (R.type == reagent)
 			//clamp the removal amount to be between current reagent amount
 			//and zero, to prevent removing more than the holder has stored
-			amount = CLAMP(amount, 0, R.volume)
+			amount = clamp(amount, 0, R.volume)
 			R.volume -= amount
 			update_total()
 			if(!safety)//So it does not handle reactions when it need not to
@@ -924,7 +940,7 @@
 
 	 *--- How to add a new random reagent category ---*
 		1. add a new flag at 'code\__DEFINES\reagents.dm' and `var/list/chem_defines` below
-			i.e.) `#define CHEMICAL_SOMETHING_NEW (1<10)`
+			i.e.) `define CHEMICAL_SOMETHING_NEW (1<10)`
 		2. add a new static variable which is corresponding to the new flag.
 			i.e.) `var/static/list/random_reagents_xx = list() // CHEMICAL_SOMETHING_NEW`
 		3. add the new static variable to the 'random_reagent' list
@@ -1005,5 +1021,7 @@
 /proc/get_chem_id(chem_name)
 	for(var/X in GLOB.chemical_reagents_list)
 		var/datum/reagent/R = GLOB.chemical_reagents_list[X]
-		if(ckey(chem_name) == ckey(lowertext(R.name)))
+		if(ckey(chem_name) == ckey(LOWER_TEXT(R.name)))
 			return X
+
+#undef CHEMICAL_QUANTISATION_LEVEL

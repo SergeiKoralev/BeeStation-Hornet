@@ -25,13 +25,14 @@
 	var/cure_chance = 8
 	var/carrier = FALSE //If our host is only a carrier
 	var/bypasses_immunity = FALSE //Does it skip species virus immunity check? Some things may diseases and not viruses
-	var/permeability_mod = 1
+	var/spreading_modifier = 1
 	var/danger = DISEASE_NONTHREAT
 	var/list/required_organs = list()
 	var/needs_all_cures = TRUE
 	var/list/strain_data = list() //dna_spread special bullshit
 	var/list/infectable_biotypes = list(MOB_ORGANIC) //if the disease can spread on organics, synthetics, or undead
 	var/process_dead = FALSE //if this ticks while the host is dead
+	var/spread_dead = FALSE
 	var/copy_type = null //if this is null, copies will use the type of the instance being copied
 	var/initial = TRUE //used in advance diseases to check if a virus has already infected a mob- the first infection never mutates
 
@@ -67,7 +68,7 @@
 	var/cure = has_cure()
 
 	var/mob/living/L = affected_mob
-	if(L.IsInStasis())
+	if(IS_IN_STASIS(L))
 		return
 
 	if(carrier && !cure)
@@ -106,6 +107,9 @@
 		return
 
 	if(!(spread_flags & DISEASE_SPREAD_AIRBORNE) && !force_spread)
+		return
+
+	if (affected_mob.stat == DEAD && !spread_dead && !force_spread)
 		return
 
 	if(affected_mob.reagents.has_reagent(/datum/reagent/medicine/spaceacillin) || (affected_mob.satiety > 0 && prob(affected_mob.satiety/10)))
@@ -149,10 +153,31 @@
 
 /datum/disease/proc/Copy()
 	//note that stage is not copied over - the copy starts over at stage 1
-	var/static/list/copy_vars = list("name", "visibility_flags", "disease_flags", "spread_flags", "form", "desc", "agent", "spread_text",
-									"cure_text", "max_stages", "stage_prob", "viable_mobtypes", "cures", "infectivity", "cure_chance",
-									"bypasses_immunity", "permeability_mod", "danger", "required_organs", "needs_all_cures", "strain_data",
-									"infectable_biotypes", "process_dead")
+	var/static/list/copy_vars = list(
+		"name",
+		"visibility_flags",
+		"disease_flags",
+		"spread_flags",
+		"form",
+		"desc",
+		"agent",
+		"spread_text",
+		"cure_text",
+		"max_stages",
+		"stage_prob",
+		"viable_mobtypes",
+		"cures",
+		"infectivity",
+		"cure_chance",
+		"bypasses_immunity",
+		"spreading_modifier",
+		"danger",
+		"required_organs",
+		"needs_all_cures",
+		"strain_data",
+		"infectable_biotypes",
+		"process_dead"
+	)
 
 	var/datum/disease/D = copy_type ? new copy_type() : new type()
 	for(var/V in copy_vars)

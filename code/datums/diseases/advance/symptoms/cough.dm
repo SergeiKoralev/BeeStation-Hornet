@@ -3,7 +3,7 @@
 
 Coughing
 
-	Noticable.
+	Noticeable.
 	Little Resistance.
 	Doesn't increase stage speed much.
 	Transmissibile.
@@ -31,10 +31,10 @@ BONUS
 	bodies = list("Cough")
 	var/infective = FALSE
 	threshold_desc = "<b>Resistance 3:</b> Host will drop small items when coughing.<br>\
-					  <b>Resistance 10:</b> Occasionally causes coughing fits that stun the host.<br>\
-					  <b>Stage Speed 6:</b> Increases cough frequency.<br>\
-					  <b>Stealth 4:</b> The symptom remains hidden until active.<br>\
-					  <b>Transmission 11:</b> The host's coughing will occasionally spread the virus."
+						<b>Resistance 10:</b> Occasionally causes coughing fits that stun the host.<br>\
+						<b>Stage Speed 6:</b> Increases cough frequency.<br>\
+						<b>Stealth 4:</b> The symptom remains hidden until active.<br>\
+						<b>Transmission 11:</b> The host's coughing will occasionally spread the virus."
 
 /datum/symptom/cough/severityset(datum/disease/advance/A)
 	. = ..()
@@ -61,6 +61,8 @@ BONUS
 	if(!..())
 		return
 	var/mob/living/M = A.affected_mob
+	if(M.stat == DEAD)
+		return
 	switch(A.stage)
 		if(1, 2, 3)
 			if(prob(base_message_chance) && !suppress_warning)
@@ -75,10 +77,10 @@ BONUS
 				to_chat(M, "<span notice='userdanger'>[pick("You have a coughing fit!", "You can't stop coughing!")]</span>")
 				M.Immobilize(20)
 				M.emote("cough")
-				addtimer(CALLBACK(M, /mob/.proc/emote, "cough"), 6)
-				addtimer(CALLBACK(M, /mob/.proc/emote, "cough"), 12)
-				addtimer(CALLBACK(M, /mob/.proc/emote, "cough"), 18)
-			if(infective && !(A.spread_flags & DISEASE_SPREAD_FALTERED) && prob(50))
-				addtimer(CALLBACK(A, /datum/disease/.proc/spread, 2), 20)
+				addtimer(CALLBACK(M, TYPE_PROC_REF(/mob, emote), "cough"), 6)
+				addtimer(CALLBACK(M, TYPE_PROC_REF(/mob, emote), "cough"), 12)
+				addtimer(CALLBACK(M, TYPE_PROC_REF(/mob, emote), "cough"), 18)
+			if((infective || CONFIG_GET(flag/unconditional_virus_spreading) || A.event) && !(A.spread_flags & DISEASE_SPREAD_FALTERED) && prob(50))
+				addtimer(CALLBACK(A, TYPE_PROC_REF(/datum/disease, spread), 2), 20)
 
 

@@ -1,23 +1,19 @@
 /*Composed of 7 parts :
 
- 3 Particle Emitters
- 1 Power Box
- 1 Fuel Chamber
- 1 End Cap
- 1 Control computer
-
- Setup map
-
-   |EC|
- CC|FC|
-   |PB|
- PE|PE|PE
-
+ * 3 Particle Emitters
+ * 1 Power Box
+ * 1 Fuel Chamber
+ * 1 End Cap
+ * 1 Control computer
+ *
+ * Setup map
+ *
+ *   |EC|
+ * CC|FC|
+ *   |PB|
+ * PE|PE|PE
+ *
 */
-#define PA_CONSTRUCTION_UNSECURED  0
-#define PA_CONSTRUCTION_UNWIRED    1
-#define PA_CONSTRUCTION_PANEL_OPEN 2
-#define PA_CONSTRUCTION_COMPLETE   3
 
 /obj/structure/particle_accelerator
 	name = "Particle Accelerator"
@@ -27,13 +23,21 @@
 	anchored = FALSE
 	density = TRUE
 	max_integrity = 500
-	armor = list("melee" = 30, "bullet" = 20, "laser" = 20, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 90, "acid" = 80, "stamina" = 0)
+	armor_type = /datum/armor/structure_particle_accelerator
 
 	var/obj/machinery/particle_accelerator/control_box/master = null
 	var/construction_state = PA_CONSTRUCTION_UNSECURED
 	var/reference = null
 	var/powered = 0
 	var/strength = null
+
+
+/datum/armor/structure_particle_accelerator
+	melee = 30
+	bullet = 20
+	laser = 20
+	fire = 90
+	acid = 80
 
 /obj/structure/particle_accelerator/examine(mob/user)
 	. = ..()
@@ -58,6 +62,13 @@
 	. = ..()
 	AddComponent(/datum/component/simple_rotation,ROTATION_ALTCLICK | ROTATION_CLOCKWISE | ROTATION_COUNTERCLOCKWISE | ROTATION_VERBS )
 
+/obj/structure/particle_accelerator/set_anchored(anchorvalue)
+	. = ..()
+	if(isnull(.))
+		return
+	construction_state = anchorvalue ? PA_CONSTRUCTION_UNWIRED : PA_CONSTRUCTION_UNSECURED
+	update_state()
+	update_icon()
 
 /obj/structure/particle_accelerator/attackby(obj/item/W, mob/user, params)
 	var/did_something = FALSE
@@ -66,19 +77,19 @@
 		if(PA_CONSTRUCTION_UNSECURED)
 			if(W.tool_behaviour == TOOL_WRENCH && !isinspace())
 				W.play_tool_sound(src, 75)
-				anchored = TRUE
-				user.visible_message("[user.name] secures the [name] to the floor.", \
-					"You secure the external bolts.")
-				construction_state = PA_CONSTRUCTION_UNWIRED
-				did_something = TRUE
+				set_anchored(TRUE)
+				user.visible_message("<span class='notice'>[user.name] secures the [name] to the floor.</span>", \
+					"<span class='notice'>You secure the external bolts.</span>")
+				user.changeNext_move(CLICK_CD_MELEE)
+				return //set_anchored handles the rest of the stuff we need to do.
 		if(PA_CONSTRUCTION_UNWIRED)
 			if(W.tool_behaviour == TOOL_WRENCH)
 				W.play_tool_sound(src, 75)
-				anchored = FALSE
-				user.visible_message("[user.name] detaches the [name] from the floor.", \
-					"You remove the external bolts.")
-				construction_state = PA_CONSTRUCTION_UNSECURED
-				did_something = TRUE
+				set_anchored(FALSE)
+				user.visible_message("<span class='notice'>[user.name] detaches the [name] from the floor.</span>", \
+					"<span class='notice'>You remove the external bolts.</span>")
+				user.changeNext_move(CLICK_CD_MELEE)
+				return //set_anchored handles the rest of the stuff we need to do.
 			else if(istype(W, /obj/item/stack/cable_coil))
 				var/obj/item/stack/cable_coil/CC = W
 				if(CC.use(1))

@@ -14,11 +14,16 @@
 	visor_flags_inv = HIDEFACE | HIDESNOUT
 	flags_cover = MASKCOVERSMOUTH | MASKCOVERSEYES
 	visor_flags_cover = MASKCOVERSMOUTH | MASKCOVERSEYES
+	unique_death = 'sound/voice/sec_death.ogg'
 	var/aggressiveness = 2
 	var/cooldown_special
 	var/recent_uses = 0
 	var/broken_hailer = 0
 	var/safety = TRUE
+
+/obj/item/clothing/mask/gas/sechailer/spacepol
+	name = "spacepol mask"
+	desc = "A standard issue gas mask with integrated 'Compli-o-nator 3000' device, created in cooperation with a certain megacorporation. Plays over a dozen pre-recorded compliance phrases designed to get scumbags to stand still whilst you tase them. Do not tamper with the device."
 
 /obj/item/clothing/mask/gas/sechailer/swat
 	name = "\improper SWAT mask"
@@ -29,7 +34,23 @@
 	aggressiveness = 3
 	flags_inv = HIDEFACIALHAIR | HIDEFACE | HIDEEYES | HIDEEARS | HIDEHAIR | HIDESNOUT
 	visor_flags_inv = 0
-	armor = list("melee" = 10, "bullet" = 5, "laser" = 5, "energy" = 5, "bomb" = 0, "bio" = 50, "rad" = 0, "fire" = 20, "acid" = 40, "stamina" = 30)
+	armor_type = /datum/armor/sechailer_swat
+
+
+/datum/armor/sechailer_swat
+	melee = 10
+	bullet = 5
+	laser = 5
+	energy = 5
+	bio = 50
+	fire = 20
+	acid = 40
+	stamina = 30
+	bleed = 30
+
+/obj/item/clothing/mask/gas/sechailer/swat/emagged
+	desc = "A close-fitting tactical mask with an especially aggressive Compli-o-nator 3000. This one seems to have the safety toggled off..."
+	safety = FALSE
 
 /obj/item/clothing/mask/gas/sechailer/swat/spacepol
 	name = "spacepol mask"
@@ -42,6 +63,7 @@
 	desc = "A set of recognizable pre-recorded messages for cyborgs to use when apprehending criminals."
 	icon = 'icons/obj/device.dmi'
 	icon_state = "taperecorder_idle"
+	slot_flags = null
 	aggressiveness = 1 //Borgs are nicecurity!
 	actions_types = list(/datum/action/item_action/halt)
 

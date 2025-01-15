@@ -11,7 +11,6 @@
 	component_datum = /datum/component/clockwork_trap/delay
 	unwrench_path = /obj/item/wallframe/clocktrap/delay
 	max_integrity = 15
-	obj_integrity = 15
 
 /datum/component/clockwork_trap/delay
 	takes_input = TRUE
@@ -25,7 +24,7 @@
 		return
 	active = TRUE
 	flick("delayer_active", parent)
-	addtimer(CALLBACK(src, .proc/finish), 5)
+	addtimer(CALLBACK(src, PROC_REF(finish)), 5)
 
 /datum/component/clockwork_trap/delay/proc/finish()
 	active = FALSE

@@ -58,7 +58,7 @@
  */
 /datum/camerachunk/proc/hasChanged(update_now = 0)
 	if(seenby.len || update_now)
-		addtimer(CALLBACK(src, .proc/update), UPDATE_BUFFER_TIME, TIMER_UNIQUE)
+		addtimer(CALLBACK(src, PROC_REF(update)), UPDATE_BUFFER_TIME, TIMER_UNIQUE)
 	else
 		changed = TRUE
 
@@ -162,4 +162,3 @@
 		obscuredTurfs[obscured_turf] = new_static
 
 #undef UPDATE_BUFFER_TIME
-#undef CHUNK_SIZE

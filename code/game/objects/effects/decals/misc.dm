@@ -1,18 +1,3 @@
-/obj/effect/temp_visual/point
-	name = "pointer"
-	icon = 'icons/mob/screen_gen.dmi'
-	icon_state = "arrow"
-	plane = POINT_PLANE
-	duration = 25
-
-/obj/effect/temp_visual/point/Initialize(mapload, set_invis = 0)
-	. = ..()
-	var/atom/old_loc = loc
-	abstract_move(get_turf(src))
-	pixel_x = old_loc.pixel_x
-	pixel_y = old_loc.pixel_y
-	invisibility = set_invis
-
 //Used by spraybottles.
 /obj/effect/decal/chempuff
 	name = "chemicals"
@@ -70,18 +55,18 @@
 
 			if(!turf_mob.can_inject())
 				continue
-			if(!(turf_mob.mobility_flags & MOBILITY_STAND) && !travelled_max_distance)
+			if(turf_mob.body_position != STANDING_UP && !travelled_max_distance)
 				continue
 
 			lifetime--
 		else if(travelled_max_distance)
 			lifetime--
-		reagents.expose(turf_atom, VAPOR)
+		reagents?.reaction(turf_atom, VAPOR)
 		if(user)
 			log_combat(user, turf_atom, "sprayed", sprayer, addition="which had [puff_reagents_string]")
 
 	if(lifetime >= 0 && (!stream || travelled_max_distance))
-		reagents.expose(our_turf, VAPOR)
+		reagents?.reaction(our_turf, VAPOR)
 		lifetime--
 		if(user)
 			log_combat(user, our_turf, "sprayed", sprayer, addition="which had [puff_reagents_string]")
@@ -90,5 +75,5 @@
 	name = "lattice"
 	desc = "A lightweight support lattice."
 	icon = 'icons/obj/smooth_structures/catwalks/lattice.dmi'
-	icon_state = "lattice"
-	density = TRUE
+	icon_state = "lattice-255"
+	density = FALSE

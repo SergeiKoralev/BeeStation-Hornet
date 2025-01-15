@@ -8,6 +8,8 @@
 	w_class = WEIGHT_CLASS_TINY
 	var/credits = 0
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/holochip)
+
 /obj/item/holochip/Initialize(mapload, amount)
 	. = ..()
 	credits = amount
@@ -105,3 +107,9 @@
 	if(prob(wipe_chance))
 		visible_message("<span class='warning'>[src] fizzles and disappears!</span>")
 		qdel(src) //rip cash
+
+/obj/item/holochip/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+	. = ..()
+	if(istype(target, /obj/machinery/vending))
+		var/obj/machinery/vending/vendor = target
+		vendor.interact(user)

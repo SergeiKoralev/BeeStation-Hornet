@@ -11,10 +11,12 @@
 	max_integrity = 50
 	var/obj/item/paper/internalPaper
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/origami)
+
 /obj/item/origami/Initialize(mapload, obj/item/paper/newPaper)
 	. = ..()
-	pixel_y = rand(-8, 8)
-	pixel_x = rand(-9, 9)
+	pixel_y = base_pixel_y + rand(-8, 8)
+	pixel_x = base_pixel_x + rand(-9, 9)
 	if(newPaper)
 		internalPaper = newPaper
 		flags_1 = newPaper.flags_1
@@ -44,7 +46,7 @@
 
 /obj/item/origami/update_icon()
 	cut_overlays()
-	var/list/stamped = internalPaper.stamped
+	var/list/stamped = internalPaper.stamp_cache
 	if(stamped)
 		for(var/S in stamped)
 			add_overlay("paper_[S]")

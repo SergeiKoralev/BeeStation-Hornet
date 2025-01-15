@@ -3,11 +3,22 @@
 	desc = "Heavy duty, airtight, plastic flaps. Definitely can't get past those. No way."
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "plasticflaps"
-	armor = list("melee" = 100, "bullet" = 80, "laser" = 80, "energy" = 100, "bomb" = 50, "bio" = 100, "rad" = 100, "fire" = 50, "acid" = 50, "stamina" = 0)
+	armor_type = /datum/armor/structure_plasticflaps
 	density = FALSE
 	anchored = TRUE
 	layer = BELOW_OBJ_LAYER
 	CanAtmosPass = ATMOS_PASS_NO
+
+
+/datum/armor/structure_plasticflaps
+	melee = 100
+	bullet = 80
+	laser = 80
+	energy = 100
+	bomb = 50
+	rad = 100
+	fire = 50
+	acid = 50
 
 /obj/structure/plasticflaps/opaque
 	opacity = TRUE
@@ -31,8 +42,8 @@
 	var/action = anchored ? "unscrews [src] from" : "screws [src] to"
 	var/uraction = anchored ? "unscrew [src] from " : "screw [src] to"
 	user.visible_message("<span class='warning'>[user] [action] the floor.</span>", "<span class='notice'>You start to [uraction] the floor...</span>", "You hear rustling noises.")
-	if(W.use_tool(src, user, 100, volume=100, extra_checks = CALLBACK(src, .proc/check_anchored_state, anchored)))
-		setAnchored(!anchored)
+	if(W.use_tool(src, user, 100, volume=100, extra_checks = CALLBACK(src, PROC_REF(check_anchored_state), anchored)))
+		set_anchored(!anchored)
 		to_chat(user, "<span class='notice'> You [anchored ? "unscrew" : "screw"] [src] from the floor.</span>")
 		return TRUE
 	else
@@ -69,31 +80,33 @@
 		return CanAStarPass(ID, to_dir, caller.pulling)
 	return TRUE //diseases, stings, etc can pass
 
-/obj/structure/plasticflaps/CanAllowThrough(atom/movable/A, turf/T)
+/obj/structure/plasticflaps/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
 
-	if(istype(A) && (A.pass_flags & PASSGLASS))
+	if(mover.pass_flags & PASSTRANSPARENT)
 		return prob(60)
 
-	var/obj/structure/bed/B = A
-	if(istype(A, /obj/structure/bed) && (B.has_buckled_mobs() || B.density))//if it's a bed/chair and is dense or someone is buckled, it will not pass
-		return FALSE
-
-	if(istype(A, /obj/structure/closet/cardboard))
-		var/obj/structure/closet/cardboard/C = A
-		if(C.move_delay)
+	if(istype(mover, /obj/structure/bed))
+		var/obj/structure/bed/bed_mover = mover
+		if(bed_mover.density || bed_mover.has_buckled_mobs())//if it's a bed/chair and is dense or someone is buckled, it will not pass
 			return FALSE
 
-	if(ismecha(A))
+	else if(istype(mover, /obj/structure/closet/cardboard))
+		var/obj/structure/closet/cardboard/cardboard_mover = mover
+		if(cardboard_mover.move_delay)
+			return FALSE
+
+	else if(ismecha(mover))
 		return FALSE
 
-	else if(isliving(A)) // You Shall Not Pass!
-		var/mob/living/M = A
-		if(isbot(A)) //Bots understand the secrets
+	else if(isliving(mover)) // You Shall Not Pass!
+		var/mob/living/living_mover = mover
+		if(isbot(mover)) //Bots understand the secrets
 			return TRUE
-		if(M.buckled && istype(M.buckled, /mob/living/simple_animal/bot/mulebot)) // mulebot passenger gets a free pass.
+		if(istype(living_mover.buckled, /mob/living/simple_animal/bot/mulebot)) // mulebot passenger gets a free pass.
 			return TRUE
-		if((M.mobility_flags & MOBILITY_STAND) && !M.ventcrawler && M.mob_size != MOB_SIZE_TINY)	//If your not laying down, or a ventcrawler or a small creature, no pass.
+
+		if(living_mover.body_position == STANDING_UP && living_mover.mob_size != MOB_SIZE_TINY && !living_mover.ventcrawler)	//If your not laying down, or a ventcrawler or a small creature, no pass.
 			return FALSE
 
 /obj/structure/plasticflaps/deconstruct(disassembled = TRUE)
@@ -104,9 +117,3 @@
 /obj/structure/plasticflaps/Initialize(mapload)
 	. = ..()
 	air_update_turf(TRUE)
-
-/obj/structure/plasticflaps/Destroy()
-	var/atom/oldloc = loc
-	. = ..()
-	if (oldloc)
-		oldloc.air_update_turf(1)

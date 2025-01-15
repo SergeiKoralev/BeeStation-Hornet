@@ -5,10 +5,11 @@
 	desc = "A standard Nanotrasen-licensed newsfeed handler for use in commercial space stations. All the news you absolutely have no use for, in one place!"
 	icon = 'icons/obj/terminals.dmi'
 	icon_state = "newscaster_off"
+	base_icon_state = "newscaster"
 	verb_say = "beeps"
 	verb_ask = "beeps"
 	verb_exclaim = "beeps"
-	armor = list("melee" = 50, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "fire" = 50, "acid" = 30)
+	armor_type = /datum/armor/machinery_newscaster
 	max_integrity = 200
 	integrity_failure = 0.25
 	///How much paper is contained within the newscaster?
@@ -56,6 +57,16 @@
 	///Text of the currently written bounty
 	var/bounty_text = ""
 
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/newscaster, 30)
+
+CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/newscaster)
+
+
+/datum/armor/machinery_newscaster
+	melee = 50
+	fire = 50
+	acid = 30
+
 /obj/machinery/newscaster/Initialize(mapload, ndir, building)
 	. = ..()
 	GLOB.allCasters += src
@@ -70,7 +81,7 @@
 	active_request = null
 	return ..()
 
-/obj/machinery/newscaster/update_icon()
+/obj/machinery/newscaster/update_appearance(updates=ALL)
 	. = ..()
 	if(machine_stat & (NOPOWER|BROKEN))
 		set_light(0)
@@ -80,22 +91,29 @@
 /obj/machinery/newscaster/update_overlays()
 	. = ..()
 	if(!(machine_stat & (NOPOWER|BROKEN)))
-		var/state = "newscaster_[GLOB.news_network.wanted_issue.active ? "wanted" : "normal"]"
+		var/state = "[base_icon_state]_[GLOB.news_network.wanted_issue.active ? "wanted" : "normal"]"
 		. += mutable_appearance(icon, state)
+		. += emissive_appearance(icon, state, layer, alpha = src.alpha)
+		ADD_LUM_SOURCE(src, LUM_SOURCE_MANAGED_OVERLAY)
 
-		if(GLOB.news_network.wanted_issue.active && alert)
-			. += mutable_appearance(icon, "newscaster_alert")
+		if(!GLOB.news_network.wanted_issue.active && alert)
+			. += mutable_appearance(icon, "[base_icon_state]_alert")
+			. += emissive_appearance(icon, "[base_icon_state]_alert", layer, alpha = src.alpha)
+			ADD_LUM_SOURCE(src, LUM_SOURCE_MANAGED_OVERLAY)
 
-	var/hp_percent = (obj_integrity * 100) / max_integrity
+	var/hp_percent = (atom_integrity * 100) / max_integrity
 	switch(hp_percent)
 		if(75 to 100)
 			return
 		if(50 to 75)
-			. += mutable_appearance(icon, "crack1")
+			. += "crack1"
+			. += emissive_blocker(icon, "crack1", alpha = src.alpha)
 		if(25 to 50)
-			. += mutable_appearance(icon, "crack2")
+			. += "crack2"
+			. += emissive_blocker(icon, "crack2", alpha = src.alpha)
 		else
-			. += mutable_appearance(icon, "crack3")
+			. += "crack3"
+			. += emissive_blocker(icon, "crack3", alpha = src.alpha)
 
 /obj/machinery/newscaster/ui_interact(mob/user, datum/tgui/ui)
 	. = ..()
@@ -130,16 +148,13 @@
 	if(card?.registered_account)
 		data["user"]["authenticated"] = TRUE
 		data["user"]["name"] = card.registered_account.account_holder
-		var/datum/data/record/R = find_record("name", card.registered_account.account_holder, GLOB.data_core.general)
+		var/datum/record/crew/R = find_record(card.registered_account.account_holder, GLOB.manifest.general)
 		if(R)
-			data["user"]["job"] = R.fields["name"]
-			data["user"]["department"] = R.fields[""]
+			data["user"]["job"] = R.rank
 		else if(card.registered_account.account_job)
 			data["user"]["job"] = card.registered_account.account_job.title
-			data["user"]["department"] = card.registered_account.account_job.bank_account_department
 		else
 			data["user"]["job"] = "No Job"
-			data["user"]["department"] = "No Department"
 	else if(issilicon(user))
 		data["user"]["authenticated"] = TRUE
 		data["user"]["silicon"] = TRUE
@@ -149,7 +164,6 @@
 	else
 		data["user"]["name"] = "Unknown"
 		data["user"]["job"] = "N/A"
-		data["user"]["department"] = "N/A"
 
 	data["photo_data"] = !isnull(current_image)
 	data["creating_channel"] = creating_channel
@@ -225,7 +239,7 @@
 	data["editor"]["channelDesc"] = channel_desc
 	data["editor"]["channelLocked"] = channel_locked
 
-	//We send all the information about all messages in existance.
+	//We send all the information about all messages in existence.
 	data["messages"] = message_list
 	data["wanted"] = wanted_info
 
@@ -543,7 +557,7 @@
 				if(!(machine_stat & BROKEN))
 					return
 				to_chat(user, "<span class='notice'>You repair [src].</span>")
-				obj_integrity = max_integrity
+				atom_integrity = max_integrity
 				set_machine_stat(machine_stat & ~BROKEN)
 				update_icon()
 		else
@@ -577,7 +591,7 @@
 		new /obj/item/shard(loc)
 	qdel(src)
 
-/obj/machinery/newscaster/obj_break(damage_flag)
+/obj/machinery/newscaster/atom_break(damage_flag)
 	. = ..()
 	if(.)
 		playsound(loc, 'sound/effects/glassbr3.ogg', 100, TRUE)
@@ -587,9 +601,9 @@
 	if(user.a_intent != INTENT_HARM)
 		to_chat(user, "<span class='warning'>The newscaster controls are far too complicated for your tiny brain!</span>")
 	else
-		take_damage(5, BRUTE, "melee")
+		take_damage(5, BRUTE, MELEE)
 
-/obj/machinery/newscaster/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir)
+/obj/machinery/newscaster/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir, armour_penetration = 0)
 	. = ..()
 	update_icon()
 
@@ -657,7 +671,7 @@
 			playsound(loc, 'sound/machines/twobeep_high.ogg', 75, TRUE)
 		alert = TRUE
 		update_overlays()
-		addtimer(CALLBACK(src, .proc/remove_alert), ALERT_DELAY, TIMER_UNIQUE|TIMER_OVERRIDE)
+		addtimer(CALLBACK(src, PROC_REF(remove_alert)), ALERT_DELAY, TIMER_UNIQUE|TIMER_OVERRIDE)
 
 	else if(!channel && update_alert)
 		say("Attention! Wanted issue distributed!")

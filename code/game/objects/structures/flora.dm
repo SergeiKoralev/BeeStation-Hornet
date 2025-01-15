@@ -1,6 +1,6 @@
 /obj/structure/flora
 	resistance_flags = FLAMMABLE
-	max_integrity = 150
+	max_integrity = 20
 	anchored = TRUE
 
 //trees
@@ -45,6 +45,7 @@
 	desc = "A coniferous pine tree."
 	icon = 'icons/obj/flora/pinetrees.dmi'
 	icon_state = "pine_1"
+	zmm_flags = ZMM_WIDE_LOAD
 	var/list/icon_states = list("pine_1", "pine_2", "pine_3")
 
 /obj/structure/flora/tree/pine/Initialize(mapload)
@@ -97,11 +98,13 @@
 	icon = 'icons/obj/flora/deadtrees.dmi'
 	desc = "A dead tree. How it died, you know not."
 	icon_state = "tree_1"
+	zmm_flags = ZMM_WIDE_LOAD
 
 /obj/structure/flora/tree/palm
 	icon = 'icons/misc/beach2.dmi'
 	desc = "A tree straight from the tropics."
 	icon_state = "palm1"
+	zmm_flags = ZMM_WIDE_LOAD
 
 /obj/structure/flora/tree/palm/Initialize(mapload)
 	. = ..()
@@ -113,6 +116,7 @@
 	icon = 'icons/obj/flora/pinetrees.dmi'
 	icon_state = "festivus_pole"
 	desc = "During last year's Feats of Strength the Research Director was able to suplex this passing immobile rod into a planter."
+	zmm_flags = ZMM_LOOKAHEAD
 
 /obj/structure/festivus/anchored
 	name = "suplexed rod"
@@ -131,6 +135,7 @@
 	icon = 'icons/obj/flora/jungletrees.dmi'
 	pixel_x = -48
 	pixel_y = -20
+	zmm_flags = ZMM_WIDE_LOAD
 
 /obj/structure/flora/tree/jungle/Initialize(mapload)
 	icon_state = "[icon_state][rand(1, 6)]"
@@ -313,9 +318,11 @@
 	throwforce = 13
 	throw_speed = 2
 	throw_range = 4
+	item_flags = NO_PIXEL_RANDOM_DROP
 
 /obj/item/kirbyplants/ComponentInitialize()
 	. = ..()
+	AddComponent(/datum/component/tactical)
 	AddComponent(/datum/component/two_handed, require_twohands=TRUE, force_unwielded=10, force_wielded=10)
 	AddComponent(/datum/component/storage/concrete/kirbyplants)
 
@@ -323,18 +330,7 @@
 	max_items = 1
 	max_w_class = WEIGHT_CLASS_NORMAL
 	insert_while_closed = FALSE // We don't want clicking plants with items to insert it, you have to alt click then click the slots
-
-/obj/item/kirbyplants/equipped(mob/living/user)
-	var/image/I = image(icon = 'icons/obj/flora/plants.dmi' , icon_state = src.icon_state, loc = user)
-	I.copy_overlays(src)
-	I.override = 1
-	add_alt_appearance(/datum/atom_hud/alternate_appearance/basic/everyone, "sneaking_mission", I)
-	I.layer = ABOVE_MOB_LAYER
-	..()
-
-/obj/item/kirbyplants/dropped(mob/living/user)
-	..()
-	user.remove_alt_appearance("sneaking_mission")
+	animated = FALSE
 
 /obj/item/kirbyplants/random
 	icon = 'icons/obj/flora/_flora.dmi'
@@ -347,6 +343,7 @@
 	if(!states)
 		generate_states()
 	icon_state = pick(states)
+	update_appearance()
 
 /obj/item/kirbyplants/random/proc/generate_states()
 	states = list()
@@ -375,6 +372,7 @@
 
 //a rock is flora according to where the icon file is
 //and now these defines
+//ah yes, a rock is in fact a plant, sure coders...
 
 /obj/structure/flora/rock
 	icon_state = "basalt"
@@ -458,3 +456,11 @@
 /obj/structure/flora/rock/pile/largejungle/Initialize(mapload)
 	. = ..()
 	icon_state = "[initial(icon_state)][rand(1,3)]"
+
+/obj/structure/flora/rock/icy
+	name = "icy rock"
+	color = rgb(204,233,235)
+
+/obj/structure/flora/rock/pile/icy
+	name = "icey rocks"
+	color = rgb(204,233,235)

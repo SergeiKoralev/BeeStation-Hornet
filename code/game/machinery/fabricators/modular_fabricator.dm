@@ -67,9 +67,11 @@
 
 /obj/machinery/modular_fabricator/Initialize(mapload)
 	if(remote_materials)
-		AddComponent(/datum/component/remote_materials, "modfab", mapload, TRUE, auto_link)
+		//We think its a protolathe/mechfab. Connectable to Ore Silo
+		AddComponent(/datum/component/remote_materials, "modfab", mapload, TRUE, auto_link, mat_container_flags=BREAKDOWN_FLAGS_LATHE)
 	else
-		AddComponent(/datum/component/material_container, list(/datum/material/iron, /datum/material/glass, /datum/material/copper, /datum/material/gold, /datum/material/gold, /datum/material/silver, /datum/material/diamond, /datum/material/uranium, /datum/material/plasma, /datum/material/bluespace, /datum/material/bananium, /datum/material/titanium), 0, TRUE, null, null, CALLBACK(src, .proc/AfterMaterialInsert))
+		//We think its a autolathe. NO Ore Silo Connection
+		AddComponent(/datum/component/material_container, SSmaterials.materialtypes_by_category[MAT_CATEGORY_RIGID], 0, MATCONTAINER_EXAMINE, null, null, CALLBACK(src, PROC_REF(AfterMaterialInsert)))
 	. = ..()
 	stored_research = new stored_research_type
 
@@ -340,7 +342,7 @@
 				for(var/i in SSmaterials.materials_by_category[used_material])
 					if(materials.materials[i] > 0)
 						list_to_show += i
-				used_material = input("Choose [used_material]", "Custom Material") as null|anything in sortList(list_to_show, /proc/cmp_typepaths_asc)
+				used_material = input("Choose [used_material]", "Custom Material") as null|anything in sort_list(list_to_show, GLOBAL_PROC_REF(cmp_typepaths_asc))
 				if(!used_material)
 					return //Didn't pick any material, so you can't build shit either.
 
@@ -354,18 +356,18 @@
 	var/turf/T
 	if(output_direction)
 		T = get_step(src, output_direction)
-		if(is_blocked_turf(T, TRUE))
+		if(T.is_blocked_turf(TRUE))
 			T = get_turf(src)
 	else
 		T = get_turf(src)
 	return T
 
 /obj/machinery/modular_fabricator/on_deconstruction()
-	var/datum/component/material_container/materials = get_material_container()
+	var/datum/component/material_container/materials = GetComponent(/datum/component/material_container)
 	materials.retrieve_all()
 
-/obj/machinery/modular_fabricator/proc/AfterMaterialInsert(type_inserted, id_inserted, amount_inserted)
-	if(ispath(type_inserted, /obj/item/stack/ore/bluespace_crystal))
+/obj/machinery/modular_fabricator/proc/AfterMaterialInsert(item_inserted, id_inserted, amount_inserted)
+	if(istype(item_inserted, /obj/item/stack/ore/bluespace_crystal))
 		use_power(MINERAL_MATERIAL_AMOUNT / 10)
 	else
 		use_power(min(1000, amount_inserted / 100))
@@ -391,7 +393,7 @@
 		playsound(src, 'sound/machines/buzz-two.ogg', 50)
 		say("Unknown design requested, removing from queue.")
 		item_queue -= requested_design_id
-		addtimer(CALLBACK(src, .proc/restart_process), 50)
+		addtimer(CALLBACK(src, PROC_REF(restart_process)), 50)
 		return
 
 	var/multiplier = 1
@@ -399,7 +401,7 @@
 	//Only items that can stack should be build en mass, since we now have queues.
 	if(is_stack)
 		multiplier = item_queue[requested_design_id]["amount"]
-	multiplier = CLAMP(multiplier,1,50)
+	multiplier = clamp(multiplier,1,50)
 
 	/////////////////
 
@@ -423,7 +425,7 @@
 			used_material = item_queue[requested_design_id]["build_mat"]
 			if(!used_material)
 				item_queue -= requested_design_id
-				addtimer(CALLBACK(src, .proc/restart_process), 50)
+				addtimer(CALLBACK(src, PROC_REF(restart_process)), 50)
 				return //Didn't pick any material, so you can't build shit either.
 			custom_materials[used_material] += amount_needed
 
@@ -453,8 +455,8 @@
 		//Create item and restart
 		process_completion_world_tick = world.time + time
 		total_build_time = time
-		addtimer(CALLBACK(src, .proc/make_item, power, materials_used, custom_materials, multiplier, coeff, is_stack, requested_design_id, queue_data), time)
-		addtimer(CALLBACK(src, .proc/restart_process), time + 5)
+		addtimer(CALLBACK(src, PROC_REF(make_item), power, materials_used, custom_materials, multiplier, coeff, is_stack, requested_design_id, queue_data), time)
+		addtimer(CALLBACK(src, PROC_REF(restart_process)), time + 5)
 	else
 		say("Insufficient materials, operation will proceed when sufficient materials are available.")
 		operating = FALSE
@@ -493,15 +495,13 @@
 	use_power(power)
 	materials.use_materials(materials_used)
 	if(is_stack)
-		var/obj/item/stack/N = new being_built.build_path(A, multiplier)
+		var/obj/item/stack/N = new being_built.build_path(src.loc, multiplier)
+		N.forceMove(A) //Forcemove to the release turf to trigger ZFall
 		N.update_icon()
 	else
-		for(var/i=1, i<=multiplier, i++)
-			var/obj/item/new_item = new being_built.build_path(A)
-			new_item.materials.Cut()	//appearantly the material datum gets initialized in a subsystem so there is no need to qdelete it but we still need to empty the list
-			for(var/mat in materials_used)
-				new_item.materials[mat] = materials_used[mat] / multiplier
-
+		for(var/i in 1 to multiplier)
+			var/obj/item/new_item = new being_built.build_path(src.loc)
+			new_item.forceMove(A) //Forcemove to the release turf to trigger ZFall
 			if(length(picked_materials))
 				new_item.set_custom_materials(picked_materials, 1 / multiplier) //Ensure we get the non multiplied amount
 	being_built = null
@@ -513,3 +513,5 @@
 
 /obj/machinery/modular_fabricator/proc/set_working_sprite()
 	return
+
+#undef MODFAB_MAX_POWER_USE

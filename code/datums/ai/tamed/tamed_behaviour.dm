@@ -16,7 +16,7 @@
 	pawn.visible_message("[pawn] stops following [controller.blackboard[BB_FOLLOW_TARGET]]!")
 	..()
 
-//Agressive >:)
+//Aggressive >:-)
 /datum/ai_behavior/tamed_follow/attack
 	behavior_flags = AI_BEHAVIOR_REQUIRE_MOVEMENT
 	COOLDOWN_DECLARE(attack_cooldown) // Time between attacks
@@ -69,3 +69,5 @@
 	var/mob/living/simple_animal/simple_pawn = controller.pawn
 	if(!istype(simple_pawn) || simple_pawn.stat)
 		return
+
+#undef FOLLOW_TOLERANCE

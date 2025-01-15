@@ -1,24 +1,24 @@
-/*	Note from Carnie:
+/* Note from Carnie:
 		The way datum/mind stuff works has been changed a lot.
 		Minds now represent IC characters rather than following a client around constantly.
 
 	Guidelines for using minds properly:
 
-	-	Never mind.transfer_to(ghost). The var/current and var/original of a mind must always be of type mob/living!
+	- Never mind.transfer_to(ghost). The var/current and var/original of a mind must always be of type mob/living!
 		ghost.mind is however used as a reference to the ghost's corpse
 
-	-	When creating a new mob for an existing IC character (e.g. cloning a dead guy or borging a brain of a human)
-		the existing mind of the old mob should be transfered to the new mob like so:
+	- When creating a new mob for an existing IC character (e.g. cloning a dead guy or borging a brain of a human)
+		the existing mind of the old mob should be transferred to the new mob like so:
 
 			mind.transfer_to(new_mob)
 
-	-	You must not assign key= or ckey= after transfer_to() since the transfer_to transfers the client for you.
+	- You must not assign key= or ckey= after transfer_to() since the transfer_to transfers the client for you.
 		By setting key or ckey explicitly after transferring the mind with transfer_to you will cause bugs like DCing
 		the player.
 
-	-	IMPORTANT NOTE 2, if you want a player to become a ghost, use mob.ghostize() It does all the hard work for you.
+	- IMPORTANT NOTE 2, if you want a player to become a ghost, use mob.ghostize() It does all the hard work for you.
 
-	-	When creating a new mob which will be a new IC character (e.g. putting a shade in a construct or randomly selecting
+	- When creating a new mob which will be a new IC character (e.g. putting a shade in a construct or randomly selecting
 		a ghost to become a xeno during an event). Simply assign the key or ckey like you've always done.
 
 			new_mob.key = key
@@ -30,21 +30,28 @@
 */
 
 /datum/mind
+	/// Key of the mob
 	var/key
-	var/name				//replaces mob/var/original_name
-	var/ghostname			//replaces name for observers name if set
-	/// The last living mob this mind occupied - if the player is dead, this is their body.
+	/// The name linked to this mind
+	var/name
+	/// replaces name for observers name if set
+	var/ghostname
+	/// Current mob this mind datum is attached to
 	var/mob/living/current
-	var/active = 0
+	/// Is this mind active?
+	var/active = FALSE
 
 	var/memory
+	var/list/quirks = list()
 
-	var/assigned_role
+	/// Job datum indicating the mind's role. This should always exist after initialization, as a reference to a singleton.
+	var/datum/job/assigned_role
 	var/special_role
 	var/list/restricted_roles = list()
 	var/list/spell_list = list() // Wizard mode & "Give Spell" badmin button.
 
 	var/linglink
+	/// Martial art on this mind
 	var/datum/martial_art/martial_art
 	var/static/default_martial_art = new/datum/martial_art
 	var/miming = 0 // Mime's vow of silence
@@ -59,8 +66,7 @@
 	var/isAntagTarget = FALSE
 	var/no_cloning_at_all = FALSE
 
-	var/mob/living/enslaved_to //If this mind's master is another mob (i.e. adamantine golems)
-	var/datum/language_holder/language_holder
+	var/datum/mind/enslaved_to //If this mind's master is another mob (i.e. adamantine golems)
 	var/unconvertable = FALSE
 	var/late_joiner = FALSE
 
@@ -75,21 +81,28 @@
 	var/list/special_statuses
 	/// your bank account id in your mind
 	var/account_id
+	/// A holder datum used to handle holoparasites and their shared behavior.
+	var/datum/holoparasite_holder/holoparasite_holder
+
+	/// The atom of our antag stash
+	var/atom/antag_stash = null
+
+	/// Boolean value indicating if the mob attached to this mind entered cryosleep.
+	var/cryoed = FALSE
+
+	/// What color our soul is
+	var/soul_glimmer
 
 /datum/mind/New(var/key)
 	src.key = key
 	soulOwner = src
 	martial_art = default_martial_art
+	setup_soul_glimmer()
 
 /datum/mind/Destroy()
 	SSticker.minds -= src
-	if(islist(antag_datums))
-		for(var/i in antag_datums)
-			var/datum/antagonist/antag_datum = i
-			if(antag_datum.delete_on_mind_deletion)
-				qdel(i)
-		antag_datums = null
-	QDEL_NULL(language_holder)
+	QDEL_LIST(antag_datums)
+	soulOwner = null
 	set_current(null)
 	return ..()
 
@@ -100,16 +113,11 @@
 		UnregisterSignal(src, COMSIG_PARENT_QDELETING)
 	current = new_current
 	if(current)
-		RegisterSignal(src, COMSIG_PARENT_QDELETING, .proc/clear_current)
+		RegisterSignal(src, COMSIG_PARENT_QDELETING, PROC_REF(clear_current))
 
 /datum/mind/proc/clear_current(datum/source)
 	SIGNAL_HANDLER
 	set_current(null)
-
-/datum/mind/proc/get_language_holder()
-	if(!language_holder)
-		language_holder = new (src)
-	return language_holder
 
 /datum/mind/proc/transfer_to(mob/new_character, var/force_key_move = 0)
 	if(current)	// remove ourself from our old body's mind variable
@@ -128,23 +136,40 @@
 
 	var/datum/atom_hud/antag/hud_to_transfer = antag_hud//we need this because leave_hud() will clear this list
 	var/mob/living/old_current = current
-	if(current)
-		current.transfer_observers_to(new_character)	//transfer anyone observing the old character to the new one
-	set_current(new_character)								//associate ourself with our new body
+	if(old_current)
+		//transfer anyone observing the old character to the new one
+		old_current.transfer_observers_to(new_character)
+
+		// Offload all mind languages from the old holder to a temp one
+		var/datum/language_holder/empty/temp_holder = new()
+		var/datum/language_holder/old_holder = old_current.get_language_holder()
+		var/datum/language_holder/new_holder = new_character.get_language_holder()
+		// Off load mind languages to the temp holder momentarily
+		new_holder.transfer_mind_languages(temp_holder)
+		// Transfer the old holder's mind languages to the new holder
+		old_holder.transfer_mind_languages(new_holder)
+		// And finally transfer the temp holder's mind languages back to the old holder
+		temp_holder.transfer_mind_languages(old_holder)
+
+	set_current(new_character) //associate ourself with our new body
 	new_character.mind = src							//and associate our new body with ourself
+
+	for(var/datum/quirk/T as() in quirks) //Retarget all traits this mind has
+		T.transfer_mob(new_character)
 	for(var/a in antag_datums)	//Makes sure all antag datums effects are applied in the new body
 		var/datum/antagonist/A = a
 		A.on_body_transfer(old_current, current)
+
 	if(iscarbon(new_character))
 		var/mob/living/carbon/C = new_character
 		C.last_mind = src
-	transfer_antag_huds(hud_to_transfer)				//inherit the antag HUD
+	transfer_antag_huds(hud_to_transfer) //inherit the antag HUD
 	transfer_actions(new_character)
 	transfer_martial_arts(new_character)
-	RegisterSignal(new_character, COMSIG_MOB_DEATH, .proc/set_death_time)
+	RegisterSignal(new_character, COMSIG_MOB_DEATH, PROC_REF(set_death_time))
 	if(active || force_key_move)
 		new_character.key = key		//now transfer the key to link the client to our new body
-	current.update_atom_languages()
+
 	SEND_SIGNAL(src, COMSIG_MIND_TRANSFER_TO, old_current, new_character)
 	// Update SSD indicators
 	if(isliving(old_current))
@@ -306,32 +331,34 @@
 	var/obj/item/uplink_loc
 	var/implant = FALSE
 
-	if(traitor_mob.client?.prefs)
-		switch(traitor_mob.client.prefs.active_character.uplink_spawn_loc)
-			if(UPLINK_PDA)
+	var/uplink_spawn_location = traitor_mob.client?.prefs?.read_character_preference(/datum/preference/choiced/uplink_location)
+	switch(uplink_spawn_location)
+		if(UPLINK_PDA)
+			uplink_loc = PDA
+			if(!uplink_loc)
+				uplink_loc = R
+			if(!uplink_loc)
+				uplink_loc = P
+		if(UPLINK_RADIO)
+			if(HAS_TRAIT(traitor_mob, TRAIT_MUTE))  // cant speak code into headset
+				to_chat(traitor_mob, "Using a radio uplink would be impossible with your muteness! Equipping PDA Uplink..")
 				uplink_loc = PDA
 				if(!uplink_loc)
 					uplink_loc = R
 				if(!uplink_loc)
 					uplink_loc = P
-			if(UPLINK_RADIO)
-				if(HAS_TRAIT(traitor_mob, TRAIT_MUTE))  // cant speak code into headset
-					to_chat(traitor_mob, "Using a radio uplink would be impossible with your muteness! Equipping PDA Uplink..")
+			else
+				uplink_loc = R
+				if(!uplink_loc)
 					uplink_loc = PDA
-					if(!uplink_loc)
-						uplink_loc = R
-					if(!uplink_loc)
-						uplink_loc = P
-				else
-					uplink_loc = R
-					if(!uplink_loc)
-						uplink_loc = PDA
-					if(!uplink_loc)
-						uplink_loc = P
-			if(UPLINK_PEN)
-				uplink_loc = P
-			if(UPLINK_IMPLANT)
-				implant = TRUE
+				if(!uplink_loc)
+					uplink_loc = P
+		if(UPLINK_PEN)
+			uplink_loc = P
+		if(UPLINK_PEN)
+			uplink_loc = P
+		if(UPLINK_IMPLANT)
+			implant = TRUE
 
 	if(!uplink_loc) // We've looked everywhere, let's just implant you
 		implant = TRUE
@@ -341,16 +368,19 @@
 		var/datum/component/uplink/U = uplink_loc.AddComponent(/datum/component/uplink, traitor_mob.key, TRUE, FALSE, gamemode, telecrystals)
 		if(src.has_antag_datum(/datum/antagonist/incursion))
 			U.uplink_flag = UPLINK_INCURSION
+		if(src.has_antag_datum(/datum/antagonist/traitor/excommunicate))
+			U.uplink_flag = UPLINK_EXCOMMUNICATE
 		if(!U)
 			CRASH("Uplink creation failed.")
 		U.setup_unlock_code()
 		if(!silent)
 			if(uplink_loc == R)
-				to_chat(traitor_mob, "<span class='boldnotice'>[employer] has cunningly disguised a Syndicate Uplink as your [R.name]. Simply speak [U.unlock_code] into the :d channel to unlock its hidden features.</span>")
+				U.unlock_text = "[employer] [employer == "You" ? "have" : "has"] cunningly disguised a Syndicate Uplink as your [R.name]. Simply speak [U.unlock_code] into the :d channel to unlock its hidden features."
 			else if(uplink_loc == PDA)
-				to_chat(traitor_mob, "<span class='boldnotice'>[employer] has cunningly disguised a Syndicate Uplink as your [PDA.name]. Simply enter the code \"[U.unlock_code]\" into the ring tone selection to unlock its hidden features.</span>")
+				U.unlock_text = "[employer] [employer == "You" ? "have" : "has"] cunningly disguised a Syndicate Uplink as your [PDA.name]. Simply enter the code \"[U.unlock_code]\" into the ring tone selection to unlock its hidden features."
 			else if(uplink_loc == P)
-				to_chat(traitor_mob, "<span class='boldnotice'>[employer] has cunningly disguised a Syndicate Uplink as your [P.name]. Simply twist the top of the pen [english_list(U.unlock_code)] from its starting position to unlock its hidden features.</span>")
+				U.unlock_text = "[employer] [employer == "You" ? "have" : "has"] cunningly disguised a Syndicate Uplink as your [P.name]. Simply twist the top of the pen [english_list(U.unlock_code)] from its starting position to unlock its hidden features."
+			to_chat(traitor_mob, "<span class='boldnotice'>[U.unlock_text]</span>")
 
 		if(uplink_owner)
 			uplink_owner.antag_memory += U.unlock_note + "<br>"
@@ -359,40 +389,40 @@
 	else
 		var/obj/item/implant/uplink/starting/I = new(traitor_mob)
 		I.implant(traitor_mob, null, silent = TRUE)
+		var/datum/component/uplink/U = I.GetComponent(/datum/component/uplink)
 		if(!silent)
-			to_chat(traitor_mob, "<span class='boldnotice'>[employer] has cunningly implanted you with a Syndicate Uplink (although uplink implants cost valuable TC, so you will have slightly less). Simply trigger the uplink to access it.</span>")
+			U.unlock_text = "[employer] [employer == "You" ? "have" : "has"] cunningly implanted [employer == "You" ? "yourself" : "you"] with a Syndicate Uplink (although uplink implants cost valuable TC, so you will have slightly less). Simply trigger the uplink to access it."
+			to_chat(traitor_mob, "<span class='boldnotice'>[U.unlock_text]</span>")
 		return I
 
 //Link a new mobs mind to the creator of said mob. They will join any team they are currently on, and will only switch teams when their creator does.
 
-/datum/mind/proc/enslave_mind_to_creator(mob/living/creator)
-	if(iscultist(creator))
-		SSticker.mode.add_cultist(src)
-
-	else if(is_servant_of_ratvar(creator))
-		add_servant_of_ratvar(current)
-
-	else if(is_revolutionary(creator))
-		var/datum/antagonist/rev/converter = creator.mind.has_antag_datum(/datum/antagonist/rev,TRUE)
-		converter.add_revolutionary(src,FALSE)
-
-	else if(is_nuclear_operative(creator))
-		var/datum/antagonist/nukeop/converter = creator.mind.has_antag_datum(/datum/antagonist/nukeop,TRUE)
-		var/datum/antagonist/nukeop/N = new()
-		N.send_to_spawnpoint = FALSE
-		N.nukeop_outfit = null
-		add_antag_datum(N,converter.nuke_team)
-
-
+/datum/mind/proc/enslave_mind_to_creator(datum/mind/creator)
+	if(ismob(creator))
+		var/mob/mob_creator = creator
+		creator = mob_creator.mind
+	if(!creator || !istype(creator))
+		return
+	if(creator.has_antag_datum(/datum/antagonist/cult))
+		SSticker.mode.add_cultist(src, stun = FALSE, equip = FALSE)
+	else if(creator.has_antag_datum(/datum/antagonist/servant_of_ratvar))
+		add_servant_of_ratvar(current, silent = TRUE)
+	if(creator.has_antag_datum(/datum/antagonist/rev))
+		var/datum/antagonist/rev/converter = creator.has_antag_datum(/datum/antagonist/rev, TRUE)
+		converter.add_revolutionary(src, FALSE)
+	var/datum/antagonist/nukeop/creator_nukie = creator.has_antag_datum(/datum/antagonist/nukeop, TRUE)
+	if(creator_nukie)
+		var/datum/antagonist/nukeop/nukie_datum = new()
+		nukie_datum.send_to_spawnpoint = FALSE
+		nukie_datum.nukeop_outfit = null
+		add_antag_datum(nukie_datum, creator_nukie.nuke_team)
 	enslaved_to = creator
-
-	current.faction |= creator.faction
-	creator.faction |= current.faction
-
-	var/mob/living/carbon/C = creator
-	if(creator.mind?.special_role || (istype(C) && C.last_mind?.special_role))
-		message_admins("[ADMIN_LOOKUPFLW(current)] has been created by [ADMIN_LOOKUPFLW(creator)], an antagonist.")
-		to_chat(current, "<span class='userdanger'>Despite your creator's current allegiances, your true master remains [creator.real_name]. If their loyalties change, so do yours. This will never change unless your creator's body is destroyed.</span>")
+	if(creator.current)
+		current.faction |= creator.current.faction
+		creator.current.faction |= current.faction
+	if(creator.special_role)
+		message_admins("[ADMIN_LOOKUPFLW(current)] has been created by [ADMIN_LOOKUPFLW(creator.current)], an antagonist.")
+		to_chat(current, "<span class='userdanger'>Despite your creator's current allegiances, your true master remains [creator.name]. If their loyalties change, so do yours. This will never change unless your creator's body is destroyed.</span>")
 
 /datum/mind/proc/show_memory(mob/recipient, window=1)
 	if(!recipient)
@@ -444,7 +474,7 @@
 		A.admin_remove(usr)
 
 	if (href_list["role_edit"])
-		var/new_role = input("Select new role", "Assigned role", assigned_role) as null|anything in sortList(get_all_jobs())
+		var/new_role = input("Select new role", "Assigned role", assigned_role) as null|anything in sort_list(get_all_jobs())
 		if (!new_role)
 			return
 		assigned_role = new_role
@@ -484,7 +514,7 @@
 					if(1)
 						target_antag = antag_datums[1]
 					else
-						var/datum/antagonist/target = input("Which antagonist gets the objective:", "Antagonist", "(new custom antag)") as null|anything in sortList(antag_datums) + "(new custom antag)"
+						var/datum/antagonist/target = input("Which antagonist gets the objective:", "Antagonist", "(new custom antag)") as null|anything in sort_list(antag_datums) + "(new custom antag)"
 						if (QDELETED(target))
 							return
 						else if(target == "(new custom antag)")
@@ -619,6 +649,8 @@
 	return get_all_antag_objectives() | crew_objectives
 
 /datum/mind/proc/is_murderbone()
+	if(enslaved_to?.is_murderbone())
+		return TRUE
 	for(var/datum/objective/O as() in get_all_objectives())
 		if(O.murderbone_flag)
 			return TRUE
@@ -653,8 +685,8 @@
 		add_antag_datum(/datum/antagonist/traitor)
 
 /datum/mind/proc/make_Contractor_Support()
-	if(!(has_antag_datum(/datum/antagonist/traitor/contractor_support)))
-		add_antag_datum(/datum/antagonist/traitor/contractor_support)
+	if(!(has_antag_datum(/datum/antagonist/contractor_support)))
+		add_antag_datum(/datum/antagonist/contractor_support)
 
 /datum/mind/proc/make_Changeling()
 	var/datum/antagonist/changeling/C = has_antag_datum(/datum/antagonist/changeling)
@@ -685,6 +717,14 @@
 	special_role = ROLE_REV_HEAD
 
 /datum/mind/proc/AddSpell(obj/effect/proc_holder/spell/S)
+	// HACK: Preferences menu creates one of every selectable species.
+	// Some species, like vampires, create spells when they're made.
+	// The "action" is created when those spells Initialize.
+	// Preferences menu can create these assets at *any* time, primarily before
+	// the atoms SS initializes.
+	// That means "action" won't exist.
+	if (isnull(S.action))
+		return
 	spell_list += S
 	S.action.Grant(current)
 
@@ -733,7 +773,7 @@
 				continue
 		S.charge_counter = delay
 		S.updateButtonIcon()
-		INVOKE_ASYNC(S, /obj/effect/proc_holder/spell.proc/start_recharge)
+		INVOKE_ASYNC(S, TYPE_PROC_REF(/obj/effect/proc_holder/spell, start_recharge))
 
 /datum/mind/proc/get_ghost(even_if_they_cant_reenter, ghosts_with_clients)
 	for(var/mob/dead/observer/G in (ghosts_with_clients ? GLOB.player_list : GLOB.dead_mob_list))
@@ -751,6 +791,8 @@
 /// Sets our can_hijack to the fastest speed our antag datums allow.
 /datum/mind/proc/get_hijack_speed()
 	. = 0
+	if(enslaved_to)
+		. = max(., enslaved_to.get_hijack_speed())
 	for(var/datum/antagonist/A in antag_datums)
 		. = max(., A.hijack_speed())
 
@@ -812,3 +854,57 @@
 	..()
 	mind.assigned_role = ROLE_PAI
 	mind.special_role = ""
+
+// Quirk Procs //
+
+/datum/mind/proc/add_quirk(quirktype, spawn_effects) //separate proc due to the way these ones are handled
+	if(HAS_TRAIT(src, quirktype))
+		return
+	var/datum/quirk/T = quirktype
+	var/qname = initial(T.name)
+	if(!SSquirks || !SSquirks.quirks[qname])
+		return
+	new quirktype (src, current, spawn_effects)
+	return TRUE
+
+/datum/mind/proc/remove_quirk(quirktype)
+	for(var/datum/quirk/Q in quirks)
+		if(Q.type == quirktype)
+			qdel(Q)
+			return TRUE
+	return FALSE
+
+/datum/mind/proc/remove_all_quirks()
+	for(var/datum/quirk/Q in quirks)
+		qdel(Q)
+
+/datum/mind/proc/has_quirk(quirktype)
+	for(var/datum/quirk/Q in quirks)
+		if(Q.type == quirktype)
+			return TRUE
+	return FALSE
+
+/datum/mind/proc/holoparasite_holder()
+	if(!holoparasite_holder)
+		holoparasite_holder = new(src)
+	return holoparasite_holder
+
+/datum/mind/proc/setup_soul_glimmer()
+	// initialise to calculate how many soul colours will be given to people
+	var/static/max_soul_pool
+	if(!max_soul_pool)
+		var/pop_value = length(GLOB.player_list)
+		var/decrement = SOUL_GLIMMER_POP_REQ_CREEP_STARTING
+		while(pop_value > 0)
+			pop_value -= decrement++ // 4, 5, 6, 7...
+			max_soul_pool++
+			if(max_soul_pool >= length(GLOB.soul_glimmer_colors))
+				break // Failsafe loop even if our codebase won't have +100 pop count...
+		max_soul_pool = clamp(max_soul_pool, SOUL_GLIMMER_MINIMUM_POP_COLOR, length(GLOB.soul_glimmer_colors))
+
+	// build a list for colours to give
+	var/static/list/options_to_give
+	if(!length(options_to_give))
+		options_to_give = GLOB.soul_glimmer_colors.Copy(1, max_soul_pool+1) // Copy(1, 3) = copy items 1-2. Not 3. Be careful.
+
+	soul_glimmer = pick_n_take(options_to_give)

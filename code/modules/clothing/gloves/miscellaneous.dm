@@ -19,13 +19,18 @@
 	icon_state = "leather"
 	item_state = "ggloves"
 	worn_icon_state = "ggloves"
-	permeability_coefficient = 0.9
 	cold_protection = HANDS
 	min_cold_protection_temperature = GLOVES_MIN_TEMP_PROTECT
 	heat_protection = HANDS
 	max_heat_protection_temperature = GLOVES_MAX_TEMP_PROTECT
 	resistance_flags = NONE
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 70, "acid" = 30, "stamina" = 0)
+	armor_type = /datum/armor/gloves_botanic_leather
+
+
+/datum/armor/gloves_botanic_leather
+	bio = 50
+	fire = 70
+	acid = 30
 
 /obj/item/clothing/gloves/combat
 	name = "combat gloves"
@@ -34,14 +39,21 @@
 	item_state = "combatgloves"
 	worn_icon_state = "combatgloves"
 	siemens_coefficient = 0
-	permeability_coefficient = 0.05
 	strip_delay = 80
 	cold_protection = HANDS
 	min_cold_protection_temperature = GLOVES_MIN_TEMP_PROTECT
 	heat_protection = HANDS
 	max_heat_protection_temperature = GLOVES_MAX_TEMP_PROTECT
 	resistance_flags = NONE
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 80, "acid" = 50, "stamina" = 20)
+	armor_type = /datum/armor/gloves_combat
+
+
+/datum/armor/gloves_combat
+	bio = 90
+	fire = 80
+	acid = 50
+	stamina = 20
+	bleed = 10
 
 /obj/item/clothing/gloves/bracer
 	name = "bone bracers"
@@ -57,7 +69,19 @@
 	min_cold_protection_temperature = GLOVES_MIN_TEMP_PROTECT
 	max_heat_protection_temperature = GLOVES_MAX_TEMP_PROTECT
 	resistance_flags = NONE
-	armor = list("melee" = 15, "bullet" = 35, "laser" = 35, "energy" = 20, "bomb" = 35, "bio" = 35, "rad" = 35, "fire" = 0, "acid" = 0, "stamina" = 20)
+	armor_type = /datum/armor/gloves_bracer
+
+
+/datum/armor/gloves_bracer
+	melee = 15
+	bullet = 35
+	laser = 35
+	energy = 20
+	bomb = 35
+	bio = 35
+	rad = 35
+	stamina = 20
+	bleed = 20
 
 /obj/item/clothing/gloves/rapid
 	name = "Gloves of the North Star"
@@ -66,6 +90,7 @@
 	item_state = "rapid"
 	worn_icon_state = "rapid"
 	transfer_prints = TRUE
+	item_flags = ISWEAPON
 	var/warcry = "AT"
 
 /obj/item/clothing/gloves/rapid/Touch(atom/A, proximity)
@@ -119,7 +144,7 @@
 		user.visible_message("<span class='danger'>[user] waves their hands at [A]</span>", "<span class='notice'>You begin manipulating [A].</span>")
 		new	/obj/effect/temp_visual/telegloves(A.loc)
 		user.changeNext_move(CLICK_CD_MELEE)
-		if(do_mob(user, A, 0.8 SECONDS))
+		if(do_after(user, 0.8 SECONDS, A))
 			new /obj/effect/temp_visual/telekinesis(user.loc)
 			playsound(user, 'sound/weapons/emitter2.ogg', 25, 1, -1)
 			A.attack_hand(user)

@@ -44,6 +44,8 @@
 	icon_state = "clusterbang_segment"
 	base_state = "clusterbang_segment"
 
+CREATION_TEST_IGNORE_SUBTYPES(/obj/item/grenade/clusterbuster/segment)
+
 /obj/item/grenade/clusterbuster/segment/Initialize(mapload, obj/item/grenade/clusterbuster/base)
 	. = ..()
 	if(base)
@@ -60,7 +62,7 @@
 	var/steps = rand(1,4)
 	for(var/i in 1 to steps)
 		step_away(src,loc)
-	addtimer(CALLBACK(src, .proc/prime), rand(15,60))
+	addtimer(CALLBACK(src, PROC_REF(prime)), rand(15,60))
 
 /obj/item/grenade/clusterbuster/segment/prime(mob/living/lanced_by)
 	if(dud_flags)
@@ -74,6 +76,8 @@
 //////////////////////////////////
 //The payload spawner effect
 /////////////////////////////////
+CREATION_TEST_IGNORE_SUBTYPES(/obj/effect/payload_spawner)
+
 /obj/effect/payload_spawner/Initialize(mapload, type, numspawned)
 	..()
 	spawn_payload(type, numspawned)
@@ -84,7 +88,7 @@
 		var/obj/item/grenade/P = new type(loc)
 		if(istype(P))
 			P.active = TRUE
-			addtimer(CALLBACK(P, /obj/item/grenade/proc/prime), rand(15,60))
+			addtimer(CALLBACK(P, TYPE_PROC_REF(/obj/item/grenade, prime)), rand(15,60))
 		var/steps = rand(1,4)
 		for(var/i in 1 to steps)
 			step_away(src,loc)
@@ -113,7 +117,7 @@
 		var/chosen = pick(subtypesof(/obj/item/slime_extract))
 		var/obj/item/slime_extract/P = new chosen(loc)
 		if(volatile)
-			addtimer(CALLBACK(P, /obj/item/slime_extract/proc/activate_slime), rand(15,60))
+			addtimer(CALLBACK(P, TYPE_PROC_REF(/obj/item/slime_extract, activate_slime)), rand(15,60))
 		var/steps = rand(1,4)
 		for(var/i in 1 to steps)
 			step_away(src,loc)
