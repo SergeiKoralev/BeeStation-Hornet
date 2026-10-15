@@ -10926,11 +10926,6 @@
 	},
 /turf/open/floor/iron/grid/steel,
 /area/station/medical/genetics)
-"djr" = (
-/obj/effect/turf_decal/bot,
-/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible,
-/turf/open/floor/iron/dark,
-/area/station/engineering/supermatter/room)
 "djv" = (
 /turf/open/floor/plating,
 /area/station/maintenance/port/aft)
@@ -28155,6 +28150,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 6
 	},
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron/dark,
 /area/station/engineering/supermatter/room)
 "ipv" = (
@@ -28200,6 +28196,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
+/obj/machinery/portable_thermomachine,
 /turf/open/floor/iron/dark,
 /area/station/engineering/supermatter/room)
 "ipV" = (
@@ -52949,10 +52946,6 @@
 /obj/structure/cable/yellow,
 /turf/open/floor/plating,
 /area/station/maintenance/solars/port/aft)
-"pAi" = (
-/obj/effect/turf_decal/bot,
-/turf/open/floor/iron/dark,
-/area/station/engineering/supermatter/room)
 "pAw" = (
 /obj/machinery/atmospherics/pipe/smart/manifold4w/supply/hidden/layer2,
 /obj/machinery/atmospherics/pipe/smart/manifold4w/scrubbers/hidden/layer4,
@@ -72856,7 +72849,6 @@
 /turf/closed/wall/r_wall,
 /area/station/engineering/supermatter/room)
 "vzY" = (
-/obj/effect/turf_decal/bot,
 /obj/effect/turf_decal/stripes/line,
 /obj/machinery/light,
 /turf/open/floor/iron/dark,
@@ -79010,7 +79002,6 @@
 /turf/open/floor/iron/white,
 /area/station/medical/medbay/lobby)
 "xqv" = (
-/obj/effect/turf_decal/bot,
 /obj/effect/turf_decal/stripes/line,
 /obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
 	dir = 9
@@ -130814,7 +130805,7 @@ rms
 dUt
 aeM
 jzT
-djr
+lEn
 xqv
 aaw
 lTa
@@ -131071,7 +131062,7 @@ rms
 pcE
 nEa
 mTY
-pAi
+tsV
 vzY
 aaw
 qyS

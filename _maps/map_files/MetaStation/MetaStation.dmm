@@ -4746,6 +4746,7 @@
 /obj/effect/turf_decal/bot{
 	dir = 1
 	},
+/obj/machinery/portable_thermomachine,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "cau" = (
@@ -8760,6 +8761,13 @@
 /obj/machinery/atmospherics/pipe/smart/manifold4w/supply/hidden/layer2,
 /turf/open/floor/iron,
 /area/station/maintenance/solars/port/fore)
+"dym" = (
+/obj/effect/turf_decal/bot{
+	dir = 1
+	},
+/obj/machinery/portable_atmospherics/scrubber,
+/turf/open/floor/iron/dark,
+/area/station/engineering/main)
 "dyw" = (
 /obj/structure/table/wood,
 /obj/item/toy/redbutton{
@@ -45358,10 +45366,6 @@
 /obj/item/kirbyplants/random,
 /turf/open/floor/iron/white,
 /area/station/medical/medbay/central)
-"pQL" = (
-/obj/effect/turf_decal/delivery,
-/turf/open/floor/iron/dark,
-/area/station/engineering/main)
 "pQO" = (
 /obj/structure/chair{
 	name = "Judge"
@@ -112209,8 +112213,8 @@ gVZ
 mhL
 tLR
 jxK
-pQL
-pQL
+vSx
+vSx
 rit
 vFI
 rup
@@ -112466,7 +112470,7 @@ mhL
 hQS
 rJB
 jxK
-car
+dym
 car
 rit
 kWO

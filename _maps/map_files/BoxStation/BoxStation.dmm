@@ -21705,6 +21705,11 @@
 /obj/structure/disposalpipe/segment,
 /turf/open/floor/iron/dark,
 /area/station/hallway/secondary/command)
+"jhO" = (
+/obj/effect/turf_decal/bot,
+/obj/machinery/portable_thermomachine,
+/turf/open/floor/iron/dark,
+/area/station/engineering/main)
 "jhP" = (
 /obj/machinery/modular_computer/console/preset/research{
 	dir = 8
@@ -35777,7 +35782,6 @@
 "oTE" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
-/obj/effect/turf_decal/delivery,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "oTX" = (
@@ -37409,6 +37413,7 @@
 /area/station/commons/vacant_room/office)
 "pDQ" = (
 /obj/effect/turf_decal/bot,
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "pDV" = (
@@ -43641,7 +43646,6 @@
 /area/station/maintenance/port/fore)
 "sgi" = (
 /obj/effect/decal/cleanable/dirt,
-/obj/effect/turf_decal/delivery,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "sgj" = (
@@ -88810,7 +88814,7 @@ qPN
 iMo
 dPU
 oTE
-pDQ
+jhO
 snx
 ygT
 tUz

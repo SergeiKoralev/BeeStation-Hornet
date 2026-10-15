@@ -5472,6 +5472,7 @@
 /area/station/maintenance/port/aft)
 "cav" = (
 /obj/effect/turf_decal/bot,
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron,
 /area/station/engineering/main)
 "cax" = (
@@ -26932,7 +26933,6 @@
 /obj/machinery/light{
 	dir = 8
 	},
-/obj/effect/turf_decal/delivery,
 /turf/open/floor/iron,
 /area/station/engineering/main)
 "kpN" = (
@@ -35787,7 +35787,6 @@
 /area/station/hallway/primary/fore)
 "nxY" = (
 /obj/item/wrench,
-/obj/effect/turf_decal/delivery,
 /turf/open/floor/iron,
 /area/station/engineering/main)
 "nyh" = (
@@ -52373,6 +52372,11 @@
 	},
 /turf/open/floor/iron,
 /area/station/engineering/atmos)
+"tHc" = (
+/obj/effect/turf_decal/bot,
+/obj/machinery/portable_thermomachine,
+/turf/open/floor/iron,
+/area/station/engineering/main)
 "tHr" = (
 /obj/machinery/gateway/station,
 /turf/open/floor/iron/techmaint,
@@ -97700,7 +97704,7 @@ mfu
 cSK
 nOP
 nxY
-cav
+tHc
 hPJ
 gSQ
 pwl

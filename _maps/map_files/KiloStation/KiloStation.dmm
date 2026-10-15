@@ -20637,6 +20637,7 @@
 /area/station/hallway/primary/fore)
 "hsi" = (
 /obj/effect/turf_decal/box,
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "hsn" = (
@@ -48612,6 +48613,11 @@
 /obj/effect/turf_decal/tile/neutral/fourcorners/contrasted,
 /turf/open/floor/iron,
 /area/station/cargo/office)
+"qFA" = (
+/obj/effect/turf_decal/box,
+/obj/machinery/portable_thermomachine,
+/turf/open/floor/iron/dark,
+/area/station/engineering/main)
 "qGo" = (
 /obj/effect/landmark/start/librarian,
 /obj/structure/chair/office{
@@ -107249,7 +107255,7 @@ xvT
 jMY
 pZN
 cwS
-hsi
+qFA
 cNh
 xKo
 qDw

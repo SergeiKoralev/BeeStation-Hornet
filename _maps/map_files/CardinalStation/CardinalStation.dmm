@@ -823,6 +823,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 6
 	},
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron/techmaint,
 /area/station/engineering/main)
 "ajv" = (
@@ -87310,6 +87311,7 @@
 "uzj" = (
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line,
+/obj/machinery/portable_thermomachine,
 /turf/open/floor/iron/techmaint,
 /area/station/engineering/main)
 "uzm" = (

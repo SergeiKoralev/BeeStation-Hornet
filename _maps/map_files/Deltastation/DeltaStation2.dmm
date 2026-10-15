@@ -17250,7 +17250,6 @@
 /area/station/commons/storage/tools)
 "fYl" = (
 /obj/effect/decal/cleanable/dirt,
-/obj/effect/turf_decal/bot,
 /turf/open/floor/iron,
 /area/station/engineering/atmospherics_engine)
 "fYv" = (
@@ -51466,6 +51465,9 @@
 /obj/effect/turf_decal/tile/neutral/fourcorners/contrasted,
 /turf/open/floor/iron,
 /area/station/engineering/atmospherics_engine)
+"qdu" = (
+/turf/open/floor/iron,
+/area/station/engineering/atmospherics_engine)
 "qdy" = (
 /obj/machinery/holopad,
 /turf/open/floor/carpet/royalblue,
@@ -64234,6 +64236,7 @@
 	pixel_y = 32
 	},
 /obj/effect/turf_decal/bot,
+/obj/machinery/portable_atmospherics/scrubber,
 /turf/open/floor/iron,
 /area/station/engineering/atmospherics_engine)
 "tXt" = (
@@ -66088,6 +66091,12 @@
 	},
 /turf/open/floor/iron,
 /area/station/cargo/miningoffice)
+"uzH" = (
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/turf_decal/bot,
+/obj/machinery/portable_thermomachine,
+/turf/open/floor/iron,
+/area/station/engineering/atmospherics_engine)
 "uAa" = (
 /obj/structure/cable/yellow,
 /obj/machinery/atmospherics/pipe/smart/manifold4w/scrubbers/hidden/layer4,
@@ -104962,7 +104971,7 @@ nUu
 lHV
 lbK
 tXn
-wXj
+qdu
 teB
 jGP
 vVr
@@ -105218,7 +105227,7 @@ hoL
 xgJ
 hoL
 foM
-fYl
+uzH
 fYl
 iEd
 wwy
