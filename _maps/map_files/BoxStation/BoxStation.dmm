@@ -4209,7 +4209,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
-/obj/machinery/atmospherics/pipe/smart/manifold4w/brown,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/brown/visible,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "bZa" = (
@@ -7653,9 +7653,8 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 6
 	},
-/obj/machinery/atmospherics/components/trinary/filter/flipped/critical{
-	dir = 8;
-	filter_type = list(/datum/gas/nitrogen)
+/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible{
+	dir = 4
 	},
 /turf/open/floor/engine,
 /area/station/engineering/main)
@@ -13052,6 +13051,11 @@
 	},
 /turf/open/floor/iron,
 /area/station/service/hydroponics)
+"fEk" = (
+/obj/structure/cable/yellow,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/brown/visible,
+/turf/open/floor/catwalk_floor/iron_dark,
+/area/station/engineering/main)
 "fEw" = (
 /obj/effect/turf_decal/tile/red/half/contrasted{
 	dir = 4
@@ -14130,10 +14134,9 @@
 "gdW" = (
 /obj/structure/cable/yellow,
 /obj/effect/turf_decal/stripes/corner,
-/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible{
-	dir = 4
+/obj/machinery/atmospherics/components/trinary/filter/flipped/critical{
+	dir = 8
 	},
-/obj/machinery/meter,
 /turf/open/floor/catwalk_floor/iron_dark,
 /area/station/engineering/main)
 "geC" = (
@@ -16663,7 +16666,7 @@
 /turf/open/floor/iron,
 /area/station/hallway/primary/central)
 "hgN" = (
-/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow/visible,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "hgV" = (
@@ -29270,6 +29273,13 @@
 	},
 /turf/open/floor/carpet/blue,
 /area/station/commons/dorms)
+"mkw" = (
+/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible{
+	dir = 4
+	},
+/obj/machinery/meter,
+/turf/open/floor/engine,
+/area/station/engineering/main)
 "mkz" = (
 /obj/effect/mapping_helpers/airlock/cyclelink_helper{
 	dir = 1
@@ -32806,7 +32816,7 @@
 /turf/open/floor/plating,
 /area/station/command/bridge)
 "nFO" = (
-/obj/machinery/atmospherics/pipe/smart/manifold4w/brown,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/brown/visible,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "nFW" = (
@@ -41052,8 +41062,8 @@
 /turf/open/floor/iron/grid,
 /area/station/medical/patients_rooms)
 "rcc" = (
-/obj/machinery/atmospherics/pipe/smart/manifold4w/brown,
 /obj/machinery/meter,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/brown/visible,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "rci" = (
@@ -48203,7 +48213,7 @@
 /area/station/maintenance/solars/starboard/aft)
 "tWU" = (
 /obj/machinery/meter,
-/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow/visible,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "tWY" = (
@@ -48928,7 +48938,7 @@
 /area/station/medical/surgery)
 "ukN" = (
 /obj/machinery/light,
-/obj/machinery/atmospherics/pipe/smart/manifold4w/brown,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/brown/visible,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "ula" = (
@@ -54242,7 +54252,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
-/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow,
+/obj/machinery/atmospherics/pipe/smart/manifold4w/yellow/visible,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "wyB" = (
@@ -89078,7 +89088,7 @@ ipc
 xqD
 dsL
 dKE
-int
+mkw
 gKU
 mxv
 rEW
@@ -89334,7 +89344,7 @@ fQd
 iMo
 qhA
 ijv
-qhA
+fEk
 gdW
 qKz
 oDX
