@@ -14599,6 +14599,7 @@
 /obj/machinery/atmospherics/pipe/layer_manifold/scrubbers/visible{
 	dir = 4
 	},
+/obj/effect/spawner/structure/window/reinforced,
 /turf/open/floor/plating,
 /area/station/engineering/main)
 "dyT" = (
@@ -45232,8 +45233,7 @@
 	dir = 4
 	},
 /obj/effect/turf_decal/tile/yellow/half/contrasted,
-/obj/machinery/meter,
-/obj/machinery/atmospherics/pipe/layer_manifold/scrubbers/hidden,
+/obj/machinery/atmospherics/pipe/layer_manifold/scrubbers/visible,
 /turf/open/floor/iron/smooth,
 /area/station/engineering/main)
 "kFK" = (
@@ -50676,6 +50676,15 @@
 	dir = 1
 	},
 /area/station/service/hydroponics)
+"lRY" = (
+/obj/effect/turf_decal/tile/neutral/opposingcorners,
+/obj/effect/turf_decal/tile/steelgrid/diagonal{
+	dir = 4
+	},
+/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible,
+/obj/machinery/meter,
+/turf/open/floor/iron/smooth,
+/area/station/engineering/main)
 "lRZ" = (
 /obj/effect/turf_decal/siding/white{
 	dir = 6
@@ -61340,6 +61349,17 @@
 /mob/living/basic/cockroach,
 /turf/open/floor/light/colour_cycle/dancefloor_a,
 /area/station/maintenance/club)
+"ort" = (
+/obj/effect/turf_decal/tile/neutral/opposingcorners,
+/obj/effect/turf_decal/tile/steelgrid/diagonal{
+	dir = 4
+	},
+/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
+	dir = 1
+	},
+/obj/machinery/meter,
+/turf/open/floor/iron/smooth,
+/area/station/engineering/main)
 "orw" = (
 /obj/machinery/airalarm/directional/north,
 /turf/open/floor/wood/big,
@@ -65041,6 +65061,7 @@
 /obj/machinery/atmospherics/pipe/smart/manifold/green/visible{
 	dir = 1
 	},
+/obj/machinery/meter,
 /turf/open/floor/iron/grid/steel,
 /area/station/engineering/main)
 "pnY" = (
@@ -92594,6 +92615,7 @@
 /obj/machinery/light/small/directional/south,
 /obj/machinery/status_display/evac/directional/south,
 /obj/machinery/atmospherics/pipe/smart/manifold/scrubbers/visible,
+/obj/machinery/meter,
 /turf/open/floor/iron/grid/steel,
 /area/station/engineering/main)
 "vKF" = (
@@ -93019,7 +93041,6 @@
 /obj/machinery/atmospherics/pipe/smart/simple/green/visible{
 	dir = 8
 	},
-/obj/machinery/meter,
 /obj/structure/sign/warning/electric_shock{
 	pixel_y = 32
 	},
@@ -137221,7 +137242,7 @@ hsA
 iBL
 iBL
 iBL
-iBL
+ort
 iBL
 tdJ
 mMR
@@ -137478,7 +137499,7 @@ fZD
 fZD
 fZD
 fZD
-fZD
+lRY
 cmD
 lTc
 esU
