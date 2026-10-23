@@ -454,6 +454,7 @@
 /obj/machinery/atmospherics/pipe/smart/manifold/green/visible{
 	dir = 1
 	},
+/obj/machinery/meter,
 /turf/open/floor/iron/smooth_half,
 /area/station/engineering/main)
 "arJ" = (
@@ -6579,7 +6580,6 @@
 	},
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/cable/yellow,
-/obj/effect/turf_decal/box/white,
 /obj/machinery/atmospherics/pipe/smart/simple/cyan/visible,
 /turf/open/floor/iron/textured_half,
 /area/station/engineering/main)
@@ -20154,10 +20154,10 @@
 /turf/open/floor/plating/asteroid/planetary,
 /area/paradise)
 "msW" = (
-/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
+/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible,
+/obj/machinery/atmospherics/pipe/bridge_pipe/cyan/visible{
 	dir = 4
 	},
-/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible,
 /turf/open/floor/iron/textured_large,
 /area/station/engineering/main)
 "mth" = (
@@ -20289,6 +20289,7 @@
 /obj/effect/turf_decal/stripes/closeup{
 	dir = 1
 	},
+/obj/machinery/meter,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "mwC" = (
@@ -20749,8 +20750,7 @@
 	pixel_y = 28
 	},
 /obj/machinery/atmospherics/components/trinary/filter/critical{
-	dir = 4;
-	filter_type = list(/datum/gas/nitrogen)
+	dir = 4
 	},
 /turf/open/floor/iron/textured_half,
 /area/station/engineering/main)
@@ -22685,9 +22685,6 @@
 /turf/open/floor/iron/grid/steel,
 /area/station/medical/patients_rooms)
 "nQz" = (
-/obj/machinery/atmospherics/components/unary/portables_connector/visible{
-	dir = 1
-	},
 /obj/machinery/portable_atmospherics/pump,
 /obj/effect/turf_decal/box/white,
 /turf/open/floor/iron/textured_large,
@@ -23753,6 +23750,13 @@
 	},
 /turf/open/floor/iron/dark/textured_half,
 /area/station/engineering/atmos)
+"oCQ" = (
+/obj/machinery/atmospherics/pipe/smart/manifold/cyan/visible{
+	dir = 1
+	},
+/obj/machinery/meter,
+/turf/open/floor/iron/smooth_half,
+/area/station/engineering/main)
 "oDI" = (
 /obj/structure/lattice/catwalk,
 /turf/open/openspace/planetary,
@@ -24201,6 +24205,7 @@
 /obj/machinery/atmospherics/pipe/smart/simple/green/visible{
 	dir = 5
 	},
+/obj/machinery/meter,
 /turf/open/floor/iron/textured_half,
 /area/station/engineering/main)
 "oRK" = (
@@ -24843,6 +24848,7 @@
 	pixel_y = -30
 	},
 /obj/machinery/atmospherics/pipe/smart/manifold/scrubbers/visible,
+/obj/machinery/meter,
 /turf/open/floor/iron/textured_large,
 /area/station/engineering/main)
 "phx" = (
@@ -37611,6 +37617,7 @@
 "wHv" = (
 /obj/effect/turf_decal/tile/neutral/fourcorners/contrasted,
 /obj/machinery/portable_atmospherics/scrubber,
+/obj/effect/turf_decal/box/white,
 /turf/open/floor/iron/textured_half{
 	dir = 1
 	},
@@ -38334,17 +38341,10 @@
 /area/station/service/janitor)
 "xfX" = (
 /obj/structure/cable,
-/obj/effect/turf_decal/box/white,
 /obj/machinery/atmospherics/pipe/bridge_pipe/green/visible,
 /turf/open/floor/iron/smooth_half{
 	dir = 1
 	},
-/area/station/engineering/main)
-"xgd" = (
-/obj/machinery/atmospherics/pipe/smart/manifold/cyan/visible{
-	dir = 1
-	},
-/turf/open/floor/iron/textured_large,
 /area/station/engineering/main)
 "xgq" = (
 /obj/item/pickaxe,
@@ -54409,7 +54409,7 @@ oUX
 fcF
 cLI
 bdv
-xgd
+jfA
 nQz
 pVb
 xlP
@@ -55171,7 +55171,7 @@ iSD
 kiH
 uAE
 diU
-cZl
+oCQ
 tqh
 ckO
 yfm
