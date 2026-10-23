@@ -511,6 +511,7 @@
 	},
 /obj/machinery/atmospherics/pipe/smart/manifold4w/supply/hidden/layer2,
 /obj/machinery/atmospherics/pipe/smart/manifold4w/scrubbers/hidden/layer4,
+/obj/machinery/meter,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "aoX" = (
@@ -591,7 +592,7 @@
 	},
 /area/station/science/shuttledock)
 "aqs" = (
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
+/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
 	dir = 10
 	},
 /turf/closed/wall/r_wall,
@@ -5661,14 +5662,14 @@
 /area/station/security/office)
 "cnE" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/west,
-/obj/machinery/atmospherics/pipe/smart/manifold/general/visible{
-	dir = 4
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
 /obj/machinery/power/energy_accumulator/tesla_coil/anchored,
+/obj/machinery/atmospherics/pipe/smart/manifold/cyan/visible{
+	dir = 4
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -7368,6 +7369,7 @@
 /obj/effect/turf_decal/stripes/line,
 /obj/machinery/atmospherics/pipe/smart/manifold4w/cyan/visible,
 /obj/structure/cable/yellow,
+/obj/machinery/meter,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "cYi" = (
@@ -9119,14 +9121,14 @@
 /area/misc/space/nearstation)
 "dCX" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/west,
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
-	dir = 9
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
 /obj/machinery/power/energy_accumulator/tesla_coil/anchored,
+/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
+	dir = 9
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -9469,7 +9471,7 @@
 /turf/open/floor/iron/showroomfloor,
 /area/station/security/office)
 "dIk" = (
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
+/obj/machinery/atmospherics/pipe/smart/simple/green/visible{
 	dir = 6
 	},
 /turf/closed/wall/r_wall,
@@ -14354,6 +14356,7 @@
 	dir = 4
 	},
 /obj/structure/cable/yellow,
+/obj/machinery/meter,
 /turf/open/floor/iron/dark,
 /area/station/engineering/main)
 "fjb" = (
@@ -14387,7 +14390,6 @@
 /turf/open/floor/iron/dark,
 /area/station/cargo/warehouse)
 "fjk" = (
-/obj/machinery/meter,
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line,
 /obj/structure/cable/yellow,
@@ -15568,6 +15570,7 @@
 	dir = 1
 	},
 /obj/structure/cable/yellow,
+/obj/machinery/meter,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "fDk" = (
@@ -20196,14 +20199,14 @@
 /area/station/maintenance/port)
 "hkf" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/west,
-/obj/machinery/atmospherics/pipe/smart/manifold/general/visible{
-	dir = 4
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
 /obj/machinery/power/energy_accumulator/grounding_rod/anchored,
+/obj/machinery/atmospherics/pipe/smart/manifold/cyan/visible{
+	dir = 4
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -24624,14 +24627,14 @@
 /area/station/medical/medbay/central)
 "iHF" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/east,
-/obj/machinery/atmospherics/pipe/smart/manifold/general/visible{
-	dir = 8
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 8
 	},
 /obj/machinery/power/energy_accumulator/grounding_rod/anchored,
+/obj/machinery/atmospherics/pipe/smart/manifold/green/visible{
+	dir = 8
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -28230,6 +28233,7 @@
 /obj/effect/mapping_helpers/airalarm/engine_access,
 /obj/effect/mapping_helpers/airalarm/tlv_no_checks,
 /obj/structure/cable/yellow,
+/obj/machinery/meter,
 /turf/open/floor/engine,
 /area/station/engineering/main)
 "jSz" = (
@@ -37012,10 +37016,10 @@
 /turf/open/floor/plating,
 /area/station/maintenance/port/aft)
 "mLi" = (
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
+/obj/machinery/meter,
+/obj/machinery/atmospherics/pipe/smart/simple/green/visible{
 	dir = 9
 	},
-/obj/machinery/meter,
 /turf/closed/wall/r_wall,
 /area/station/engineering/supermatter)
 "mLr" = (
@@ -45658,14 +45662,14 @@
 /area/station/medical/medbay/central)
 "pJT" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/east,
-/obj/machinery/atmospherics/pipe/smart/manifold/general/visible{
-	dir = 8
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 8
 	},
 /obj/machinery/power/energy_accumulator/tesla_coil/anchored,
+/obj/machinery/atmospherics/pipe/smart/manifold/green/visible{
+	dir = 8
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -49589,10 +49593,10 @@
 /turf/open/floor/iron,
 /area/station/security/brig)
 "qVs" = (
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
+/obj/machinery/meter,
+/obj/machinery/atmospherics/pipe/smart/simple/cyan/visible{
 	dir = 5
 	},
-/obj/machinery/meter,
 /turf/closed/wall/r_wall,
 /area/station/engineering/supermatter)
 "qVA" = (
@@ -56482,6 +56486,15 @@
 	},
 /turf/open/floor/plating/airless,
 /area/docking/arrival)
+"tzb" = (
+/obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible{
+	dir = 4
+	},
+/obj/machinery/light,
+/obj/effect/turf_decal/stripes/line,
+/obj/machinery/meter,
+/turf/open/floor/engine,
+/area/station/engineering/main)
 "tzj" = (
 /obj/machinery/camera/directional/west{
 	c_tag = "Xenobiology Cell 1";
@@ -62555,14 +62568,14 @@
 /area/station/service/library)
 "vzm" = (
 /obj/structure/window/reinforced/plasma/spawner/directional/east,
-/obj/machinery/atmospherics/pipe/smart/simple/general/visible{
-	dir = 5
-	},
 /obj/structure/cable,
 /obj/effect/turf_decal/stripes/line{
 	dir = 8
 	},
 /obj/machinery/power/energy_accumulator/tesla_coil/anchored,
+/obj/machinery/atmospherics/pipe/smart/simple/green/visible{
+	dir = 5
+	},
 /turf/open/floor/circuit/green{
 	luminosity = 2
 	},
@@ -105720,7 +105733,7 @@ iHF
 vzm
 iNJ
 fDc
-aGt
+tzb
 vrw
 ntO
 mGt
