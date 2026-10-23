@@ -4442,6 +4442,7 @@
 	dir = 4
 	},
 /obj/structure/cable/yellow,
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "bsa" = (
@@ -15787,6 +15788,7 @@
 	dir = 4;
 	name = "Gas to Loop"
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "eHK" = (
@@ -31451,6 +31453,7 @@
 /area/station/science/misc_lab)
 "jmf" = (
 /obj/machinery/atmospherics/components/trinary/filter/flipped,
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "jmg" = (
@@ -40743,6 +40746,7 @@
 	dir = 8;
 	name = "Thermoelectric Generator loop"
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/dark,
 /area/station/engineering/supermatter/room)
 "lUG" = (
@@ -54355,6 +54359,7 @@
 	volume_rate = 200
 	},
 /obj/structure/lattice/catwalk/over,
+/obj/machinery/atmospherics/pipe/heat_exchanging/simple,
 /turf/open/space/basic,
 /area/station/engineering/supermatter/room)
 "pVM" = (
@@ -57058,13 +57063,6 @@
 	},
 /turf/open/floor/engine/plasma/light,
 /area/station/engineering/atmos)
-"qNY" = (
-/obj/effect/turf_decal/bot,
-/obj/machinery/atmospherics/components/binary/volume_pump{
-	dir = 4
-	},
-/turf/open/floor/iron/dark,
-/area/station/engineering/supermatter/room)
 "qOb" = (
 /obj/machinery/light,
 /obj/item/radio/intercom{
@@ -57633,7 +57631,6 @@
 /obj/effect/turf_decal/stripes/red/line{
 	dir = 1
 	},
-/obj/effect/turf_decal/bot,
 /obj/machinery/atmospherics/pipe/smart/manifold/green/visible{
 	dir = 1
 	},
@@ -59696,6 +59693,7 @@
 	dir = 1;
 	name = "Thermo to Gas"
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/engine,
 /area/station/engineering/supermatter/room)
 "rCR" = (
@@ -60327,6 +60325,17 @@
 /obj/effect/turf_decal/tile/blue/fourcorners/contrasted,
 /turf/open/floor/iron/cafeteria,
 /area/station/command/heads_quarters/cmo)
+"rMm" = (
+/obj/machinery/atmospherics/components/unary/outlet_injector/on{
+	dir = 8;
+	volume_rate = 200
+	},
+/obj/structure/lattice/catwalk/over,
+/obj/machinery/atmospherics/pipe/heat_exchanging/simple{
+	dir = 6
+	},
+/turf/open/space/basic,
+/area/station/engineering/supermatter/room)
 "rMn" = (
 /obj/effect/turf_decal/trimline/blue/filled/line,
 /obj/effect/turf_decal/trimline/blue/line{
@@ -63772,7 +63781,6 @@
 /turf/open/floor/carpet,
 /area/station/service/chapel)
 "sOg" = (
-/obj/effect/turf_decal/bot,
 /obj/effect/turf_decal/stripes/line{
 	dir = 1
 	},
@@ -68011,6 +68019,7 @@
 /obj/machinery/atmospherics/components/binary/pump{
 	name = "Gas to Thermo"
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "udk" = (
@@ -68350,16 +68359,6 @@
 	},
 /turf/open/floor/engine/n2o/light,
 /area/station/engineering/atmos)
-"uhB" = (
-/obj/effect/turf_decal/stripes/line{
-	dir = 1
-	},
-/obj/effect/turf_decal/bot,
-/obj/machinery/atmospherics/pipe/smart/simple/green/visible{
-	dir = 4
-	},
-/turf/open/floor/iron/ameridiner,
-/area/station/engineering/supermatter/room)
 "uhE" = (
 /obj/machinery/atmospherics/pipe/smart/manifold4w/scrubbers/hidden/layer4,
 /obj/structure/cable/yellow,
@@ -73554,6 +73553,7 @@
 	name = "Atmos to Gas"
 	},
 /obj/structure/cable/yellow,
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "vJX" = (
@@ -74738,6 +74738,7 @@
 /obj/machinery/atmospherics/components/binary/volume_pump{
 	dir = 4
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/dark,
 /area/station/engineering/supermatter/room)
 "wdw" = (
@@ -77479,6 +77480,7 @@
 	name = "Gas to Cooling Loop";
 	dir = 4
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "wRy" = (
@@ -78641,6 +78643,7 @@
 	dir = 4;
 	name = "Thermoelectric Generator Input"
 	},
+/obj/effect/turf_decal/bot,
 /turf/open/floor/iron/ameridiner,
 /area/station/engineering/supermatter/room)
 "xla" = (
@@ -131068,7 +131071,7 @@ izO
 aaw
 aOL
 iRH
-uhB
+cic
 pWG
 nsv
 tDL
@@ -135696,7 +135699,7 @@ tsV
 tsV
 tsV
 tsV
-qNY
+pMm
 hfM
 rms
 kFs
@@ -136201,10 +136204,10 @@ bjA
 bjA
 bjA
 rms
+rMm
 pVJ
 pVJ
-pVJ
-nMO
+cnl
 lDW
 nMO
 vkZ
@@ -136458,10 +136461,10 @@ bjA
 bjA
 bjA
 rms
-twL
-twL
-twL
 raM
+cnl
+cnl
+cnl
 cnl
 lDW
 raM
